@@ -1,0 +1,50 @@
+# Automated build (S1-05) and secret scan (S1-07). Runs on every pull request and every push to main.
+# The pull request shows a pass or fail result; main is merged only through an approved pull request.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pizza
+          POSTGRES_PASSWORD: pizza
+          POSTGRES_DB: pizza
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pizza"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://pizza:pizza@localhost:5432/pizza?schema=public
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Apply database migrations
+        run: npm run db:deploy --workspace server
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

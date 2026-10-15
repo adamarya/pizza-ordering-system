@@ -1,0 +1,39 @@
+/* Base layout for 360px phones through 1280px desktops (PB-15). Colors meet WCAG 2.1 AA contrast. */
+:root {
+  --ink: #1f1f1f;
+  --muted: #555;
+  --brand: #a8321e;
+  --brand-ink: #ffffff;
+  --surface: #ffffff;
+  --line: #ddd;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+.site-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+}
+.site-header nav { display: flex; gap: 16px; }
+.site-header a { color: var(--ink); text-decoration: none; font-weight: 600; }
+.site-header a.active { color: var(--brand); }
+.brand { font-size: 1.15rem; }
+
+.site-footer { padding: 12px 16px; border-top: 1px solid var(--line); color: var(--muted); }
+
+.button {
+  display: inline-block; padding: 10px 16px; border-radius: 6px;
+  background: var(--brand); color: var(--brand-ink); text-decoration: none; font-weight: 600;
+}
+
+:focus-visible { outline: 3px solid #1a5fb4; outline-offset: 2px; }
+
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { left: 16px; top: 8px; background: #fff; padding: 8px; z-index: 10; }

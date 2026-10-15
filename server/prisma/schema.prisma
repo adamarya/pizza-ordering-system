@@ -1,0 +1,13 @@
+// Prisma schema for the Pizza Restaurant Online Ordering System.
+// Models for Sprint 1 (StoreSettings, Category, MenuItem, ItemSize, Crust, Topping) are added
+// under S1-04, S1-13, and S1-18 following Figure 4 of the Project Document.
+// Money is stored as integer cents (Table 21). Run `npm run db:migrate` after editing.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
