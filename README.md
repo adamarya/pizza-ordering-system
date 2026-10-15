@@ -12,7 +12,7 @@ A responsive website where a customer browses the menu, configures a pizza, and 
 | API | Node.js 24 LTS, Express, TypeScript, zod (`/server`) |
 | Database | PostgreSQL 16 through Prisma (`/server/prisma`) |
 | Tests | Vitest, Supertest, Testing Library |
-| CI | GitHub Actions (`.github/workflows/ci.yml`) |
+| CI and deploy | GitHub Actions (`.github/workflows/ci.yml`) to Azure App Service |
 
 ## Local setup
 
@@ -42,6 +42,10 @@ Open http://localhost:5173. The footer shows the build version and whether the A
 npm run build
 npm start                        # serves the site and the API together on http://localhost:3000
 ```
+
+## Shared test environment
+
+Every merge to `main` that passes CI deploys to https://pizza-group1.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
 
 ## Tests
 

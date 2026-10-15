@@ -48,3 +48,52 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Deploys main to the shared test environment (S1-06) after both checks pass.
+  # Azure App Service "pizza-group1" runs `npm start`, which applies migrations and starts the API,
+  # and the API serves the built client. Settings (DATABASE_URL, NODE_ENV) live in the web app.
+  deploy-test:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-and-test, secret-scan]
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: https://pizza-group1.azurewebsites.net
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install production dependencies only
+        run: npm ci --omit=dev
+      - name: Generate the Prisma client when the schema has models
+        run: |
+          if grep -qE '^model ' server/prisma/schema.prisma; then
+            node node_modules/prisma/build/index.js generate --schema server/prisma/schema.prisma
+          fi
+      - name: Assemble the deployment package
+        run: |
+          mkdir -p deploy/server deploy/client
+          cp package.json package-lock.json deploy/
+          cp -r node_modules deploy/
+          cp -r server/package.json server/dist server/prisma server/scripts deploy/server/
+          cp -r client/package.json client/dist deploy/client/
+          find deploy/node_modules -type l -delete
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: pizza-group1
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy
+      - name: Smoke test the deployed health check
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            body=$(curl -s --max-time 30 https://pizza-group1.azurewebsites.net/health || true)
+            echo "$body"
+            if echo "$body" | grep -q '"version"'; then exit 0; fi
+            sleep 15
+          done
+          echo "The deployed site did not answer /health" >&2
+          exit 1
