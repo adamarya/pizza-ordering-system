@@ -33,6 +33,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Generate the Prisma client
+        run: npm run db:generate --workspace server
       - name: Apply database migrations
         run: npm run db:deploy --workspace server
       - run: npm run typecheck
