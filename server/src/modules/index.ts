@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import { catalogRouter } from './catalog/catalog.routes.js';
+import { cartRouter } from './cart/cart.routes.js';
 
 // Each module from Table 19 of the Project Document lives in its own folder under src/modules
-// with its routes, service, repository, and tests. Mount new module routers here.
-//
-// Sprint 1 modules and owners (Sprint Planning document, Sprint 1 sheet):
-//   store   GET /api/store            PB-02 (moved to Sprint 2)
-//   catalog GET /api/menu, /api/menu/items/:id   PB-03, PB-04   Paul Banda (data), Aaron Aguirre (screens)
-//   cart    POST /api/cart/quote       PB-05                    Paul Banda (pricing service)
+// with its routes, service, and repository. Mount new module routers here.
+//   catalog  GET /api/menu, GET /api/menu/items/:id   PB-03, PB-04
+//   cart     POST /api/cart/quote                      PB-04, PB-05
 export const apiRouter = Router();
+apiRouter.use(catalogRouter);
+apiRouter.use(cartRouter);
