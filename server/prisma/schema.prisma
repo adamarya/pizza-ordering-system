@@ -11,3 +11,104 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ================================================================
+// LAYER 1: THE STORE AND THE MENU STRUCTURE (PB-02, PB-03)
+// The store's settings, and a menu grouped into categories.
+// Figure 4, Catalog package.
+// ================================================================
+
+// One row of settings for the whole store.
+model StoreSettings {
+  id                 String  @id @default(uuid()) @db.Uuid
+  name               String
+  description        String
+  streetAddress      String
+  phone              String
+  taxRateBps         Int     // tax in basis points: 100 = 1%, so 8.25% is stored as 825
+  deliveryFeeCents   Int     // money is whole cents, never decimals: $3.99 is 399
+  deliveryFeeTaxable Boolean @default(false) // store setting; default is NOT taxed (Table 21)
+  deliveryRadiusKm   Decimal @db.Decimal(5, 2)
+  menuVersion        Int     @default(1) // goes up when the menu changes, so browsers know to refresh
+}
+
+// A menu section such as Pizzas, Sides or Drinks.
+model Category {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  displayOrder Int        @default(0) // lower numbers show first
+  isRetired    Boolean    @default(false) // hidden from the menu but kept, so old orders still make sense
+  menuItems    MenuItem[] // one category has many items
+}
+
+// Something a customer can order, such as Pepperoni Pizza.
+model MenuItem {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  description  String?    // the ? means optional
+  imageKey     String?
+  isPizza      Boolean    @default(false) // pizzas get crusts and toppings
+  isAvailable  Boolean    @default(true) // temporarily out of stock
+  isRetired    Boolean    @default(false) // permanently off the menu
+  displayOrder Int        @default(0)
+  categoryId   String     @db.Uuid // real column: the id of this item's category
+  category     Category   @relation(fields: [categoryId], references: [id]) // lets code say item.category
+  sizes        ItemSize[] // Layer 2
+  crusts       Crust[]    @relation("offers") // Layer 2, many-to-many
+  toppings     Topping[]  @relation("allows") // Layer 2, many-to-many
+}
+
+// ================================================================
+// LAYER 2: SIZES, CRUSTS AND TOPPINGS (PB-03, PB-04)
+// How an item can be ordered, and what each choice costs.
+// ================================================================
+
+// Small, Medium, Large. The price lives here, because each size costs differently.
+model ItemSize {
+  id           String   @id @default(uuid()) @db.Uuid
+  label        String
+  priceCents   Int
+  displayOrder Int      @default(0)
+  menuItemId   String   @db.Uuid
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+// Thin, Deep Dish, and so on. One crust can be offered on many items,
+// and one item can offer many crusts (Prisma makes the hidden table _offers).
+model Crust {
+  id             String     @id @default(uuid()) @db.Uuid
+  name           String
+  surchargeCents Int        @default(0) // extra charge for this crust; plain is 0
+  isAvailable    Boolean    @default(true)
+  menuItems      MenuItem[] @relation("offers")
+}
+
+// Pepperoni, Mushrooms, and so on. Same many-to-many idea (hidden table _allows).
+model Topping {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  priceCents  Int
+  isAvailable Boolean    @default(true)
+  menuItems   MenuItem[] @relation("allows")
+}
+
+// ================================================================
+// LAYER 3: STAFF ACCOUNTS (PB-11, Figure 10)
+// Each manager and staff member has their own login.
+// ================================================================
+
+// A fixed list of allowed values. Anything else is rejected by the database.
+enum Role {
+  STAFF
+  MANAGER
+}
+
+model UserAccount {
+  id             String    @id @default(uuid()) @db.Uuid
+  username       String    @unique // no two accounts can share a username
+  passwordHash   String    // a scrambled (Argon2id) version of the password, never the password itself
+  role           Role
+  isDisabled     Boolean   @default(false)
+  failedAttempts Int       @default(0) // counts wrong passwords, for lockout
+  lockedUntil    DateTime? // empty unless the account is locked
+}
