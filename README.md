@@ -45,7 +45,7 @@ npm start                        # serves the site and the API together on http:
 
 ## Shared test environment
 
-Every merge to `main` that passes CI deploys to https://pizza-group1.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu and accounts at startup, but only when the database is empty, so it never overwrites data. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu and accounts at startup, but only when the database is empty, so it never overwrites data. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
 
 ## What Sprint 1 delivers
 
