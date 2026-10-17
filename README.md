@@ -45,12 +45,27 @@ npm start                        # serves the site and the API together on http:
 
 ## Shared test environment
 
-Every merge to `main` that passes CI deploys to https://pizza-group1.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+Every merge to `main` that passes CI deploys to https://pizza-group1.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu and accounts at startup, but only when the database is empty, so it never overwrites data. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+
+## What Sprint 1 delivers
+
+| Screen | Route | Backlog |
+|---|---|---|
+| Menu by category, unavailable items labeled | `/menu` | PB-03 |
+| Item configuration: size, crust, whole or half toppings, quantity, instructions, live server price | `/menu/:itemId` | PB-04 |
+| Cart with pickup or delivery, tip, and the server's itemized quote | `/cart` | PB-05 |
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
+| `GET /api/menu/items/:id` | One item's options |
+| `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
+| `GET /health` | Build version and database status |
 
 ## Tests
 
 ```bash
-npm test          # server and client test suites
+npm test          # server and client test suites (the API tests reset the database in DATABASE_URL to the demo data)
 npm run typecheck
 ```
 

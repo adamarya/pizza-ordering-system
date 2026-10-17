@@ -20,6 +20,11 @@ if (process.env.NODE_ENV === 'production') {
       stdio: 'inherit',
       cwd: serverDir,
     });
+    // The test environment opts in to demo data with the web app setting SEED_DEMO_DATA=true.
+    // It loads only into an empty database.
+    if (process.env.SEED_DEMO_DATA === 'true') {
+      await import(pathToFileURL(path.join(serverDir, 'dist', 'seed', 'seedIfEmpty.js')).href);
+    }
   }
 }
 
