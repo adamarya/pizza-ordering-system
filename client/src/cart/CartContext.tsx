@@ -75,10 +75,46 @@ export function toQuoteRequest(state: CartState): QuoteRequest {
   };
 }
 
+const isString = (v: unknown): v is string => typeof v === 'string';
+
+/** Accepts stored data only if it has the cart's shape; anything else starts an empty cart. */
+export function parseStoredCart(raw: string | null): CartState {
+  if (!raw) return emptyCart;
+  try {
+    const data = JSON.parse(raw);
+    const lines: CartLine[] = Array.isArray(data?.lines)
+      ? data.lines
+          .filter(
+            (l: Partial<CartLine>) =>
+              isString(l?.lineId) &&
+              isString(l?.menuItemId) &&
+              isString(l?.sizeId) &&
+              (l.crustId === undefined || isString(l.crustId)) &&
+              Array.isArray(l.toppings) &&
+              l.toppings.every((t) => isString(t?.toppingId) && ['WHOLE', 'LEFT', 'RIGHT'].includes(t?.placement)) &&
+              Number.isInteger(l.quantity) &&
+              (l.quantity as number) >= 1 &&
+              (l.quantity as number) <= MAX_QUANTITY &&
+              isString(l.instructions),
+          )
+          .slice(0, MAX_LINES)
+      : [];
+    const fulfillment = data?.fulfillment === 'DELIVERY' ? 'DELIVERY' : 'PICKUP';
+    const tip: Tip =
+      data?.tip?.type === 'PERCENT' && Number.isInteger(data.tip.percent) && data.tip.percent >= 0 && data.tip.percent <= 100
+        ? { type: 'PERCENT', percent: data.tip.percent }
+        : data?.tip?.type === 'AMOUNT' && Number.isInteger(data.tip.cents) && data.tip.cents >= 0
+          ? { type: 'AMOUNT', cents: data.tip.cents }
+          : emptyCart.tip;
+    return { lines, fulfillment, tip };
+  } catch {
+    return emptyCart;
+  }
+}
+
 function load(): CartState {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? { ...emptyCart, ...JSON.parse(raw) } : emptyCart;
+    return parseStoredCart(sessionStorage.getItem(STORAGE_KEY));
   } catch {
     return emptyCart;
   }

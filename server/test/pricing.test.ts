@@ -108,6 +108,17 @@ describe('calculateQuote', () => {
     expect(q.totalCents).toBe(599 + 49 + 599);
   });
 
+  it('rounds an exact half cent of tax up', () => {
+    const tenDollars: CatalogItem = { ...knots, id: id(4), sizes: [{ id: id(42), label: 'Regular', priceCents: 1000 }] };
+    const q = calculateQuote(
+      { fulfillment: 'PICKUP', lines: [{ menuItemId: tenDollars.id, sizeId: id(42), quantity: 1 }] },
+      new Map([[tenDollars.id, tenDollars]]),
+      rates,
+    );
+    expect(q.taxCents).toBe(83); // 1000 x 8.25% = 82.5
+    expect(q.totalCents).toBe(1083);
+  });
+
   it('keeps discounts at zero until promotions arrive with PB-14', () => {
     expect(calculateQuote(order('PICKUP'), catalog, rates).discountCents).toBe(0);
   });

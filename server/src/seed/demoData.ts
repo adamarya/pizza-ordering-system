@@ -2,14 +2,19 @@
 // Written by Paul Banda for S1-04; moved here from prisma/seed.ts so the compiled server can also
 // load it on the Azure test site (see seedIfEmpty.ts). Synthetic data only.
 import { hash } from '@node-rs/argon2';
-import { type PrismaClient, Role } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // Demo-only passwords for local testing. The repo is public, so never reuse a real password here.
 const MANAGER_PASSWORD = 'Manager-Demo-1!';
 const STAFF_PASSWORD = 'Staff-Demo-1!';
 
-/** Replaces all catalog, settings, and account rows with the demo data. */
-export async function seedDemoData(prisma: PrismaClient) {
+/**
+ * Replaces all catalog, settings, and account rows with the demo data. Demo accounts use the
+ * published passwords above, so they are created only for local development and tests; the
+ * public test site passes { accounts: false }.
+ */
+export async function seedDemoData(prisma: PrismaClient, options: { accounts?: boolean } = {}) {
+  const withAccounts = options.accounts ?? true;
   // 1. Clear old data first, children before parents, so running the seed twice never duplicates rows.
   await prisma.itemSize.deleteMany();
   await prisma.menuItem.deleteMany();
@@ -99,11 +104,12 @@ export async function seedDemoData(prisma: PrismaClient) {
   }
 
   // 7. One manager and one staff account. Only the hash is stored, never the password.
+  if (!withAccounts) return;
   await prisma.userAccount.create({
-    data: { username: 'manager', passwordHash: await hash(MANAGER_PASSWORD), role: Role.MANAGER },
+    data: { username: 'manager', passwordHash: await hash(MANAGER_PASSWORD), role: 'MANAGER' },
   });
   await prisma.userAccount.create({
-    data: { username: 'staff', passwordHash: await hash(STAFF_PASSWORD), role: Role.STAFF },
+    data: { username: 'staff', passwordHash: await hash(STAFF_PASSWORD), role: 'STAFF' },
   });
 
 }

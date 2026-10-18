@@ -68,14 +68,20 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Generate the Prisma client for the build
+        run: npm run db:generate --workspace server
       - run: npm run build
       - name: Install production dependencies only
         run: npm ci --omit=dev
-      - name: Generate the Prisma client when the schema has models
+      - name: Generate the Prisma client and bundle the engines
+        # The App Service file system is read-only after deploy, so the query engine and the
+        # schema engine (used by migrate deploy at startup) must be in the package. npm can skip
+        # Prisma's install script, so it is run explicitly and the result is checked.
         run: |
-          if grep -qE '^model ' server/prisma/schema.prisma; then
-            node node_modules/prisma/build/index.js generate --schema server/prisma/schema.prisma
-          fi
+          node node_modules/@prisma/engines/scripts/postinstall.js
+          node node_modules/prisma/build/index.js generate --schema server/prisma/schema.prisma
+          ls node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x
+          ls node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
       - name: Assemble the deployment package
         run: |
           mkdir -p deploy/server deploy/client

@@ -79,6 +79,7 @@ describe('POST /api/cart/quote', () => {
     expect(res.body.taxCents).toBe(141); // 1713 x 8.25% = 141.32
     expect(res.body.deliveryFeeCents).toBe(399);
     expect(res.body.totalCents).toBe(1713 + 141 + 399);
+    expect(res.headers['ratelimit-policy']).toBe('120;w=60');
   });
 
   it('validates the request on the server', async () => {
@@ -103,5 +104,17 @@ describe('POST /api/cart/quote', () => {
     expect(res.status).toBe(200);
     expect(res.body.lines[0].error.code).toBe('ITEM_UNAVAILABLE');
     expect(res.body.subtotalCents).toBe(0);
+  });
+});
+
+// Runs last: reseeding replaces every row, so the ids captured above stop matching.
+describe('demo data for the public test site', () => {
+  it('loads the menu without the demo accounts when asked to', async () => {
+    const prisma = getPrisma();
+    await seedDemoData(prisma, { accounts: false });
+    expect(await prisma.userAccount.count()).toBe(0);
+    expect(await prisma.menuItem.count()).toBe(7);
+    await seedDemoData(prisma);
+    expect(await prisma.userAccount.count()).toBe(2);
   });
 });

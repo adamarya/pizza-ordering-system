@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getPrisma } from '../../db.js';
 import { getStoreSettings, loadCatalogForQuote, toRates } from '../catalog/catalog.repository.js';
 import { calculateQuote } from './pricing.js';
@@ -9,7 +10,17 @@ import { quoteRequestSchema } from './quote.schema.js';
 // a stale or edited price in the browser cannot change what the customer is charged.
 export const cartRouter = Router();
 
-cartRouter.post('/cart/quote', async (req, res, next) => {
+// Public endpoint, so it is rate limited per client address (Table 22): 120 quotes a minute is
+// far above what a person editing a cart produces, and well below what a script would send.
+const quoteLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many pricing requests. Please wait a moment and try again.' },
+});
+
+cartRouter.post('/cart/quote', quoteLimiter, async (req, res, next) => {
   try {
     const parsed = quoteRequestSchema.safeParse(req.body);
     if (!parsed.success) {

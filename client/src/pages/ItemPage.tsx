@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { MAX_QUANTITY, useCart } from '../cart/CartContext';
+import { MAX_LINES, MAX_QUANTITY, useCart } from '../cart/CartContext';
 import { useQuote } from '../cart/useQuote';
 import { fetchMenuItem, type MenuItem, type Placement, type QuoteLineRequest } from '../lib/api';
 import { formatCents } from '../lib/money';
@@ -21,6 +21,7 @@ export function ItemPage() {
   const navigate = useNavigate();
   const { cart, dispatch } = useCart();
   const editing = cart.lines.find((l) => l.lineId === editId);
+  const cartFull = !editing && cart.lines.length >= MAX_LINES;
 
   const [item, setItem] = useState<MenuItem | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -83,7 +84,7 @@ export function ItemPage() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!line || priced?.error) return;
+    if (!line || priced?.error || cartFull) return;
     const cartLine = {
       menuItemId: line.menuItemId,
       sizeId: line.sizeId,
@@ -196,7 +197,12 @@ export function ItemPage() {
             </span>
           </label>
 
-          <button type="submit" className="button" disabled={!priced || Boolean(priced.error)}>
+          {cartFull && (
+            <p role="alert" className="error-text small">
+              Your cart already has {MAX_LINES} items, the most one order can hold. Remove one to add this.
+            </p>
+          )}
+          <button type="submit" className="button" disabled={!priced || Boolean(priced.error) || cartFull}>
             {editing ? 'Update cart' : 'Add to cart'}
           </button>
         </form>

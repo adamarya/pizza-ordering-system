@@ -1,4 +1,4 @@
-import { cartReducer, emptyCart, toQuoteRequest, MAX_QUANTITY } from './CartContext';
+import { cartReducer, emptyCart, parseStoredCart, toQuoteRequest, MAX_QUANTITY } from './CartContext';
 
 const line = { menuItemId: 'item-1', sizeId: 'size-1', crustId: 'crust-1', toppings: [], quantity: 1, instructions: '' };
 
@@ -27,5 +27,25 @@ describe('cartReducer', () => {
     const req = toQuoteRequest(s);
     expect(req.lines[0]).toEqual({ menuItemId: 'item-1', sizeId: 'size-1', crustId: 'crust-1', quantity: 1, instructions: 'extra crispy' });
     expect(JSON.stringify(req)).not.toMatch(/price|total/i);
+  });
+});
+
+describe('parseStoredCart', () => {
+  it('restores a well-formed cart', () => {
+    const stored = { lines: [{ ...line, lineId: 'a' }], fulfillment: 'DELIVERY', tip: { type: 'AMOUNT', cents: 300 } };
+    expect(parseStoredCart(JSON.stringify(stored))).toEqual(stored);
+  });
+
+  it('drops malformed lines and falls back to defaults for anything unexpected', () => {
+    const stored = {
+      lines: [{ ...line, lineId: 'a', quantity: 500 }, { lineId: 'b', menuItemId: 7 }, { ...line, lineId: 'c' }],
+      fulfillment: 'TELEPORT',
+      tip: { type: 'PERCENT', percent: -5 },
+    };
+    const cart = parseStoredCart(JSON.stringify(stored));
+    expect(cart.lines.map((l) => l.lineId)).toEqual(['c']);
+    expect(cart.fulfillment).toBe('PICKUP');
+    expect(cart.tip).toEqual(emptyCart.tip);
+    expect(parseStoredCart('not json')).toEqual(emptyCart);
   });
 });
