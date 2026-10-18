@@ -45,7 +45,7 @@ npm start                        # serves the site and the API together on http:
 
 ## Shared test environment
 
-Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu and accounts at startup, but only when the database is empty, so it never overwrites data. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
 
 ## What Sprint 1 delivers
 
@@ -61,6 +61,8 @@ Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
 | `GET /health` | Build version and database status |
+
+Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
 
 ## Tests
 
