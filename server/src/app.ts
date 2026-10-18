@@ -11,6 +11,8 @@ const version = process.env.npm_package_version ?? '0.1.0';
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  // Azure App Service sits behind one front-end proxy; trust it so rate limits see the client address.
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.use(express.json({ limit: '100kb' }));
 

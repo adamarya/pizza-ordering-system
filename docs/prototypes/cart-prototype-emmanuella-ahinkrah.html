@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crust &amp; Co. — Pizza Cart &amp; Review</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f5f5f4;
+      color: #1c1917;
+      line-height: 1.5;
+      padding: 32px 16px;
+    }
+    .cart-container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e7e5e4;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e7e5e4;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .header-bar h1 { font-size: 1.75rem; font-weight: 800; }
+    
+    /* Brand styling: black name with red ampersand */
+    .brand-tag {
+      font-weight: 900;
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+      color: #000000;
+      text-transform: uppercase;
+    }
+    .brand-tag .ampersand {
+      color: #dc2626;
+      font-style: normal;
+    }
+
+    /* Layout Grid */
+    .cart-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 28px;
+    }
+    @media (max-width: 768px) {
+      .cart-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cart Item Card */
+    .cart-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #e7e5e4;
+    }
+    .cart-item.out-of-stock {
+      opacity: 0.6;
+      background-color: #fafaf9;
+    }
+    .item-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e7e5e4;
+    }
+    .item-info { flex: 1; }
+    .item-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .item-options { font-size: 0.85rem; color: #78716c; margin-bottom: 8px; }
+    .badge-unavailable {
+      display: inline-block;
+      background: #e7e5e4;
+      color: #78716c;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Quantity Controls */
+    .qty-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #d6d3d1;
+      background: #ffffff;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .qty-btn:hover { background: #f5f5f4; }
+    .qty-display { font-weight: 600; min-width: 20px; text-align: center; }
+
+    /* Focus ring for WCAG 2.1 AA accessibility */
+    button:focus-visible, textarea:focus-visible, input:focus-visible {
+      outline: 3px solid #0284c7;
+      outline-offset: 2px;
+    }
+
+    /* Special Instructions */
+    .instructions-section {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e7e5e4;
+    }
+    .instructions-section label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .instructions-section textarea {
+      width: 100%;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      border: 1px solid #d6d3d1;
+      border-radius: 6px;
+      resize: vertical;
+    }
+    .char-counter {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #78716c;
+      margin-top: 4px;
+    }
+    .char-counter.limit-reached { color: #dc2626; font-weight: bold; }
+
+    /* Summary Panel */
+    .quote-box {
+      background: #fafaf9;
+      border: 1px solid #e7e5e4;
+      border-radius: 8px;
+      padding: 20px;
+      height: fit-content;
+    }
+    .quote-status-badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      margin-bottom: 16px;
+    }
+    .fulfillment-toggle {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .toggle-label {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #d6d3d1;
+      background: #ffffff;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    /* Section divider inside sidebar */
+    .panel-section {
+      border-top: 1px solid #e7e5e4;
+      padding-top: 14px;
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #44403c;
+      margin-bottom: 8px;
+    }
+
+    /* Discount / Promo Code Styles */
+    .discount-wrap {
+      display: flex;
+      gap: 6px;
+    }
+    .discount-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #d6d3d1;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .discount-btn {
+      padding: 8px 14px;
+      background: #1c1917;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .discount-btn:hover { background: #292524; }
+    .discount-message {
+      font-size: 0.75rem;
+      margin-top: 6px;
+    }
+    .discount-message.success { color: #15803d; font-weight: 600; }
+    .discount-message.error { color: #dc2626; }
+    .applied-tag {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+    .remove-discount-btn {
+      background: none;
+      border: none;
+      color: #dc2626;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* Tips Styles */
+    .tip-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .tip-btn {
+      padding: 8px 4px;
+      background: #ffffff;
+      border: 1px solid #d6d3d1;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      color: #1c1917;
+    }
+    .tip-btn:hover { background: #f5f5f4; }
+    .tip-btn.active {
+      background: #1c1917;
+      color: #ffffff;
+      border-color: #1c1917;
+    }
+    .custom-tip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .custom-tip-input {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #d6d3d1;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    /* Price breakdown rows */
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: #57534e;
+    }
+    .row.discount-row { color: #15803d; font-weight: 600; }
+    .row.grand-total {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #1c1917;
+      border-top: 2px solid #e7e5e4;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .checkout-btn {
+      width: 100%;
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    .checkout-btn:hover { background: #15803d; }
+  </style>
+</head>
+<body>
+
+  <main class="cart-container" id="main-content">
+    <div class="header-bar">
+      <div>
+        <div class="brand-tag">Crust <span class="ampersand">&amp;</span> Co.</div>
+        <h1>Your Cart &amp; Order Review</h1>
+      </div>
+      <span id="cart-item-count" style="font-weight: 600; color: #78716c;">3 Items</span>
+    </div>
+
+    <div class="cart-grid">
+      <!-- Itemized Cart Items -->
+      <section aria-label="Order Items">
+        <div id="cart-items-list">
+          <!-- Rendered by JavaScript -->
+        </div>
+
+        <!-- Special Instructions with 200 char cap -->
+        <div class="instructions-section">
+          <label for="special-instructions">Special Instructions (Max 200 characters)</label>
+          <textarea
+            id="special-instructions"
+            rows="3"
+            maxlength="200"
+            placeholder="e.g. Well-done bake, contactless drop-off on porch..."
+            oninput="handleInstructions(this)"
+            aria-describedby="char-count"
+          ></textarea>
+          <div class="char-counter" id="char-counter-wrap">
+            <span id="instructions-alert"></span>
+            <span id="char-count" aria-live="polite">0 / 200 characters</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Server Quote & Checkout Summary -->
+      <aside class="quote-box" aria-label="Order Quote and Summary">
+        <div class="quote-status-badge">✓ Live Server Quote</div>
+        <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 12px;">Order Summary</h2>
+
+        <!-- Pickup / Delivery toggle -->
+        <div class="fulfillment-toggle">
+          <label class="toggle-label">
+            <input type="radio" name="orderType" value="pickup" checked onchange="updateServerQuote()" />
+            Pickup ($0.00)
+          </label>
+          <label class="toggle-label">
+            <input type="radio" name="orderType" value="delivery" onchange="updateServerQuote()" />
+            Delivery ($3.99)
+          </label>
+        </div>
+
+        <!-- Promo / Discount Code Section -->
+        <div class="panel-section">
+          <div class="section-title">Promo / Discount Code</div>
+          <div class="discount-wrap">
+            <input
+              type="text"
+              id="discount-input"
+              class="discount-input"
+              placeholder="e.g. CRUST15"
+              aria-label="Enter promo code"
+            />
+            <button type="button" class="discount-btn" onclick="applyPromoCode()">Apply</button>
+          </div>
+          <div id="discount-feedback"></div>
+        </div>
+
+        <!-- Tip Section -->
+        <div class="panel-section">
+          <div class="section-title">Add a Tip for the Team</div>
+          <div class="tip-grid">
+            <button type="button" class="tip-btn" data-percent="0" onclick="selectTipPercent(0)">None</button>
+            <button type="button" class="tip-btn" data-percent="10" onclick="selectTipPercent(10)">10%</button>
+            <button type="button" class="tip-btn active" data-percent="15" onclick="selectTipPercent(15)">15%</button>
+            <button type="button" class="tip-btn" data-percent="20" onclick="selectTipPercent(20)">20%</button>
+          </div>
+          <div class="custom-tip-wrap">
+            <input
+              type="number"
+              id="custom-tip-input"
+              class="custom-tip-input"
+              placeholder="Custom tip ($)"
+              step="0.50"
+              min="0"
+              oninput="handleCustomTip(this.value)"
+            />
+          </div>
+        </div>
+
+        <!-- Cost Breakdown -->
+        <div class="row">
+          <span>Subtotal:</span>
+          <span id="quote-subtotal">$0.00</span>
+        </div>
+        <div class="row discount-row" id="quote-discount-row" style="display: none;">
+          <span>Discount:</span>
+          <span id="quote-discount">-$0.00</span>
+        </div>
+        <div class="row">
+          <span>Fulfillment Fee:</span>
+          <span id="quote-fee">$0.00</span>
+        </div>
+        <div class="row">
+          <span>Tip:</span>
+          <span id="quote-tip">$0.00</span>
+        </div>
+        <div class="row">
+          <span>Estimated Tax (8.25%):</span>
+          <span id="quote-tax">$0.00</span>
+        </div>
+        <div class="row grand-total">
+          <span>Total:</span>
+          <span id="quote-total">$0.00</span>
+        </div>
+        <div style="font-size: 0.75rem; color: #a8a29e; text-align: right; margin-top: 6px;">
+          Quote Ref: <span id="quote-id">REQ-000000</span>
+        </div>
+
+        <button type="button" class="checkout-btn" onclick="submitOrder()">
+          Place Order
+        </button>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    // -------------------------------------------------------------
+    // Initial Cart Data with Pizza Photos
+    // -------------------------------------------------------------
+    const cart = [
+      {
+        id: "pizza-1",
+        name: "Classic Margherita",
+        size: "Medium",
+        crust: "Hand Tossed",
+        toppings: ["Tomato Sauce", "Fresh Mozzarella", "Fresh Basil"],
+        quantity: 1,
+        isAvailable: true,
+        img: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=300&q=80"
+      },
+      {
+        id: "pizza-2",
+        name: "Pepperoni Party",
+        size: "Large",
+        crust: "Thin Crust",
+        toppings: ["Pepperoni", "Mozzarella", "House Sauce"],
+        quantity: 1,
+        isAvailable: true,
+        img: "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=300&q=80"
+      },
+      {
+        id: "pizza-3",
+        name: "Spicy Garden (Seasonal)",
+        size: "Small",
+        crust: "Hand Tossed",
+        toppings: ["Jalapeños", "Bell Peppers", "Chili Oil"],
+        quantity: 1,
+        isAvailable: false,
+        img: "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?auto=format&fit=crop&w=300&q=80"
+      }
+    ];
+
+    // Supported promo codes
+    const VALID_PROMO_CODES = {
+      "CRUST15": { type: "percent", value: 15, label: "15% off" },
+      "CRUST20": { type: "percent", value: 20, label: "20% off" },
+      "SAVE5":   { type: "fixed", value: 5.00, label: "$5.00 off" }
+    };
+
+    let appliedPromo = null;
+    let selectedTipMode = "percent"; // "percent" | "custom"
+    let tipPercent = 15;
+    let customTipAmount = 0.00;
+
+    // -------------------------------------------------------------
+    // Renders the Cart Items
+    // -------------------------------------------------------------
+    function renderCart() {
+      const container = document.getElementById("cart-items-list");
+      container.innerHTML = "";
+
+      let totalItemCount = 0;
+
+      cart.forEach((item, index) => {
+        if (item.isAvailable) totalItemCount += item.quantity;
+
+        const div = document.createElement("div");
+        div.className = "cart-item" + (!item.isAvailable ? " out-of-stock" : "");
+
+        div.innerHTML = `
+          <img src="${item.img}" alt="${item.name}" class="item-img" />
+          <div class="item-info">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+              <div>
+                <h3 class="item-name">${item.name}</h3>
+                <div class="item-options">${item.size} · ${item.crust}</div>
+                <div class="item-options">Toppings: ${item.toppings.join(", ")}</div>
+              </div>
+              <div style="text-align:right;">
+                <span style="font-weight:700; font-size:1.05rem;" id="line-total-${item.id}">—</span>
+                <div style="font-size:0.8rem; color:#78716c;" id="unit-price-${item.id}"></div>
+              </div>
+            </div>
+
+            ${!item.isAvailable 
+              ? `<div style="margin-top:8px;">
+                   <span class="badge-unavailable">Currently Out of Stock</span>
+                   <span style="font-size:0.8rem; color:#dc2626; margin-left:8px;">Cannot be ordered</span>
+                 </div>`
+              : `<div class="qty-wrap">
+                   <button type="button" class="qty-btn" onclick="changeQty(${index}, -1)" aria-label="Decrease quantity">−</button>
+                   <span class="qty-display" aria-live="polite">${item.quantity}</span>
+                   <button type="button" class="qty-btn" onclick="changeQty(${index}, 1)" aria-label="Increase quantity">+</button>
+                   <button type="button" onclick="removeItem(${index})" style="margin-left:16px; background:none; border:none; color:#dc2626; font-size:0.8rem; cursor:pointer;">Remove</button>
+                 </div>`
+            }
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+
+      document.getElementById("cart-item-count").innerText = totalItemCount + " Items in Order";
+
+      updateServerQuote();
+    }
+
+    function changeQty(index, delta) {
+      cart[index].quantity += delta;
+      if (cart[index].quantity <= 0) {
+        cart.splice(index, 1);
+      }
+      renderCart();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      renderCart();
+    }
+
+    // -------------------------------------------------------------
+    // Special Instructions with 200 Char limit
+    // -------------------------------------------------------------
+    function handleInstructions(textarea) {
+      const len = textarea.value.length;
+      const counter = document.getElementById("char-count");
+      const wrapper = document.getElementById("char-counter-wrap");
+
+      counter.innerText = `${len} / 200 characters`;
+      if (len >= 200) {
+        wrapper.className = "char-counter limit-reached";
+      } else {
+        wrapper.className = "char-counter";
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Promo / Discount Code Handlers
+    // -------------------------------------------------------------
+    function applyPromoCode() {
+      const input = document.getElementById("discount-input");
+      const code = input.value.trim().toUpperCase();
+      const feedback = document.getElementById("discount-feedback");
+
+      if (!code) {
+        feedback.innerHTML = `<div class="discount-message error">Please enter a promo code.</div>`;
+        return;
+      }
+
+      if (VALID_PROMO_CODES[code]) {
+        appliedPromo = { code, ...VALID_PROMO_CODES[code] };
+        input.value = "";
+        renderPromoStatus();
+        updateServerQuote();
+      } else {
+        feedback.innerHTML = `<div class="discount-message error">Invalid promo code. Try <strong>CRUST15</strong> or <strong>SAVE5</strong>.</div>`;
+      }
+    }
+
+    function removePromoCode() {
+      appliedPromo = null;
+      renderPromoStatus();
+      updateServerQuote();
+    }
+
+    function renderPromoStatus() {
+      const feedback = document.getElementById("discount-feedback");
+      if (appliedPromo) {
+        feedback.innerHTML = `
+          <div class="applied-tag">
+            <span>✓ <strong>${appliedPromo.code}</strong> (${appliedPromo.label}) applied</span>
+            <button type="button" class="remove-discount-btn" onclick="removePromoCode()">Remove</button>
+          </div>
+        `;
+      } else {
+        feedback.innerHTML = "";
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Tip Handlers
+    // -------------------------------------------------------------
+    function selectTipPercent(pct) {
+      selectedTipMode = "percent";
+      tipPercent = pct;
+      document.getElementById("custom-tip-input").value = "";
+
+      document.querySelectorAll(".tip-btn").forEach(btn => {
+        const p = parseInt(btn.getAttribute("data-percent"), 10);
+        btn.classList.toggle("active", p === pct);
+      });
+
+      updateServerQuote();
+    }
+
+    function handleCustomTip(val) {
+      const parsed = parseFloat(val);
+      if (val !== "" && !isNaN(parsed) && parsed >= 0) {
+        selectedTipMode = "custom";
+        customTipAmount = parsed;
+        document.querySelectorAll(".tip-btn").forEach(btn => btn.classList.remove("active"));
+      } else {
+        selectedTipMode = "percent";
+        customTipAmount = 0;
+      }
+      updateServerQuote();
+    }
+
+    // -------------------------------------------------------------
+    // Mock Pricing Engine with Discount & Tip
+    // -------------------------------------------------------------
+    function serverPricingEngine(cartPayload, fulfillmentType, promo, tipConfig) {
+      const sizeRates = { Small: 10.00, Medium: 14.00, Large: 18.00 };
+      const toppingFee = 1.25;
+      const taxRate = 0.0825;
+
+      let subtotal = 0;
+      const itemBreakdowns = {};
+
+      cartPayload.forEach(item => {
+        if (!item.isAvailable) {
+          itemBreakdowns[item.id] = { unit: 0, extended: 0, excluded: true };
+          return;
+        }
+
+        const base = sizeRates[item.size] || 12.00;
+        const toppingsCost = (item.toppings.length || 0) * toppingFee;
+        const unit = Math.round((base + toppingsCost) * 100) / 100;
+        const extended = Math.round((unit * item.quantity) * 100) / 100;
+
+        subtotal += extended;
+        itemBreakdowns[item.id] = { unit, extended, excluded: false };
+      });
+
+      subtotal = Math.round(subtotal * 100) / 100;
+
+      // Discount calculation
+      let discount = 0;
+      if (promo && subtotal > 0) {
+        if (promo.type === "percent") {
+          discount = Math.round((subtotal * (promo.value / 100)) * 100) / 100;
+        } else if (promo.type === "fixed") {
+          discount = Math.min(promo.value, subtotal);
+        }
+      }
+
+      const discountedSubtotal = Math.max(0, subtotal - discount);
+      const fee = fulfillmentType === 'delivery' ? 3.99 : 0.00;
+
+      // Tip calculation based on discounted subtotal
+      let tip = 0;
+      if (tipConfig.mode === "custom") {
+        tip = Math.round(tipConfig.customAmount * 100) / 100;
+      } else if (tipConfig.mode === "percent" && tipConfig.percent > 0) {
+        tip = Math.round((discountedSubtotal * (tipConfig.percent / 100)) * 100) / 100;
+      }
+
+      // Tax calculated on discounted subtotal + fulfillment fee
+      const tax = Math.round(((discountedSubtotal + fee) * taxRate) * 100) / 100;
+      const grandTotal = Math.round((discountedSubtotal + fee + tax + tip) * 100) / 100;
+
+      return {
+        quoteRef: "QTE-" + Math.floor(100000 + Math.random() * 900000),
+        subtotal: subtotal.toFixed(2),
+        discount: discount.toFixed(2),
+        fee: fee.toFixed(2),
+        tip: tip.toFixed(2),
+        tax: tax.toFixed(2),
+        grandTotal: grandTotal.toFixed(2),
+        items: itemBreakdowns
+      };
+    }
+
+    // Update the UI from the calculated quote
+    function updateServerQuote() {
+      const fulfillment = document.querySelector('input[name="orderType"]:checked').value;
+      const tipConfig = {
+        mode: selectedTipMode,
+        percent: tipPercent,
+        customAmount: customTipAmount
+      };
+
+      const quote = serverPricingEngine(cart, fulfillment, appliedPromo, tipConfig);
+
+      document.getElementById("quote-subtotal").innerText = "$" + quote.subtotal;
+
+      const discountRow = document.getElementById("quote-discount-row");
+      if (parseFloat(quote.discount) > 0) {
+        discountRow.style.display = "flex";
+        document.getElementById("quote-discount").innerText = "-$" + quote.discount;
+      } else {
+        discountRow.style.display = "none";
+      }
+
+      document.getElementById("quote-fee").innerText = "$" + quote.fee;
+      document.getElementById("quote-tip").innerText = "$" + quote.tip;
+      document.getElementById("quote-tax").innerText = "$" + quote.tax;
+      document.getElementById("quote-total").innerText = "$" + quote.grandTotal;
+      document.getElementById("quote-id").innerText = quote.quoteRef;
+
+      // Update unit and line total displays per item
+      Object.keys(quote.items).forEach(id => {
+        const itemQuote = quote.items[id];
+        const lineEl = document.getElementById("line-total-" + id);
+        const unitEl = document.getElementById("unit-price-" + id);
+
+        if (lineEl && unitEl) {
+          if (itemQuote.excluded) {
+            lineEl.innerText = "$0.00";
+            unitEl.innerText = "Unavailable";
+          } else {
+            lineEl.innerText = "$" + itemQuote.extended.toFixed(2);
+            unitEl.innerText = "($" + itemQuote.unit.toFixed(2) + " ea)";
+          }
+        }
+      });
+    }
+
+    function submitOrder() {
+      const instructions = document.getElementById("special-instructions").value;
+      const quoteId = document.getElementById("quote-id").innerText;
+      const total = document.getElementById("quote-total").innerText;
+      const tip = document.getElementById("quote-tip").innerText;
+      const promoInfo = appliedPromo ? `\nPromo: ${appliedPromo.code}` : "";
+
+      const cleanInstructions = instructions.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+      alert(
+        "Order successfully placed with Server Quote Ref: " + quoteId +
+        promoInfo +
+        "\nTip: " + tip +
+        "\nTotal: " + total +
+        "\nInstructions: " + (cleanInstructions || "None")
+      );
+    }
+
+    // Run immediately when loaded
+    renderCart();
+  </script>
+</body>
+</html>

@@ -43,14 +43,41 @@ npm run build
 npm start                        # serves the site and the API together on http://localhost:3000
 ```
 
+## One-command demo (no PostgreSQL install needed)
+
+```bash
+npm ci
+npm run build
+npm run demo                     # http://localhost:3000, Ctrl+C to stop
+```
+
+`npm run demo` starts a private PostgreSQL 16 server from the `embedded-postgres` package (Windows x64, macOS, and Linux), keeps its data in `.demo-db/`, applies the migrations, loads the demo menu, and serves the built site. Delete `.demo-db/` to start from a fresh menu. Run it as a normal user, not as root or Administrator, because PostgreSQL refuses to run with administrator rights.
+
 ## Shared test environment
 
-Every merge to `main` that passes CI deploys to https://pizza-group1.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+
+## What Sprint 1 delivers
+
+| Screen | Route | Backlog |
+|---|---|---|
+| Menu by category, unavailable items labeled | `/menu` | PB-03 |
+| Item configuration: size, crust, whole or half toppings, quantity, instructions, live server price | `/menu/:itemId` | PB-04 |
+| Cart with pickup or delivery, tip, and the server's itemized quote | `/cart` | PB-05 |
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
+| `GET /api/menu/items/:id` | One item's options |
+| `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
+| `GET /health` | Build version and database status |
+
+Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
 
 ## Tests
 
 ```bash
-npm test          # server and client test suites
+npm test          # server and client test suites (the API tests reset the database in DATABASE_URL to the demo data)
 npm run typecheck
 ```
 
