@@ -23,7 +23,6 @@ export function MenuPage() {
 
   const selectedId = params.get('category') ?? menu.categories[0].id;
   const selectedIndex = Math.max(0, menu.categories.findIndex((c) => c.id === selectedId));
-  const selected = menu.categories[selectedIndex];
 
   const select = (index: number) => {
     setParams({ category: menu.categories[index].id }, { replace: true });
@@ -60,36 +59,46 @@ export function MenuPage() {
         ))}
       </div>
 
-      <div role="tabpanel" id={`panel-${selected.id}`} aria-labelledby={`tab-${selected.id}`}>
-        <ul className="menu-grid">
-          {selected.items.map((item) => (
-            <li key={item.id} className={`menu-card${item.isAvailable ? '' : ' unavailable'}`}>
-              <div className="menu-card-body">
-                <h2>{item.name}</h2>
-                {!item.isAvailable && <span className="badge-muted">Currently unavailable</span>}
-                {item.description && <p className="muted">{item.description}</p>}
-                <p className="sizes">
-                  {item.sizes.map((s) => (
-                    <span key={s.id}>
-                      {item.sizes.length > 1 ? `${s.label} ` : ''}
-                      {formatCents(s.priceCents)}
-                    </span>
-                  ))}
-                </p>
-              </div>
-              {item.isAvailable ? (
-                <Link className="button" to={`/menu/${item.id}`} aria-label={`${item.isPizza ? 'Build' : 'Add'} ${item.name}`}>
-                  {item.isPizza ? 'Build your pizza' : 'Add to order'}
-                </Link>
-              ) : (
-                <span className="button button-disabled" aria-hidden="true">
-                  Unavailable
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Every tab's aria-controls points at a panel that exists; inactive panels are hidden. */}
+      {menu.categories.map((category, i) => (
+        <div
+          key={category.id}
+          role="tabpanel"
+          id={`panel-${category.id}`}
+          aria-labelledby={`tab-${category.id}`}
+          hidden={i !== selectedIndex}
+        >
+          {category.items.length === 0 && <p className="muted">Nothing in this category right now.</p>}
+          <ul className="menu-grid">
+            {category.items.map((item) => (
+              <li key={item.id} className={`menu-card${item.isAvailable ? '' : ' unavailable'}`}>
+                <div className="menu-card-body">
+                  <h2>{item.name}</h2>
+                  {!item.isAvailable && <span className="badge-muted">Currently unavailable</span>}
+                  {item.description && <p className="muted">{item.description}</p>}
+                  <p className="sizes">
+                    {item.sizes.map((s) => (
+                      <span key={s.id}>
+                        {item.sizes.length > 1 ? `${s.label} ` : ''}
+                        {formatCents(s.priceCents)}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+                {item.isAvailable ? (
+                  <Link className="button" to={`/menu/${item.id}`} aria-label={`${item.isPizza ? 'Build' : 'Add'} ${item.name}`}>
+                    {item.isPizza ? 'Build your pizza' : 'Add to order'}
+                  </Link>
+                ) : (
+                  <span className="button button-disabled" aria-hidden="true">
+                    Unavailable
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </section>
   );
 }

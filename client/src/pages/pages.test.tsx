@@ -54,6 +54,22 @@ describe('MenuPage', () => {
     expect(screen.queryByRole('link', { name: 'Build Spicy Garden' })).toBeNull();
   });
 
+  it('gives every tab a panel that exists, showing only the selected one', async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <MenuPage />
+      </MemoryRouter>,
+    );
+    const tabs = await screen.findAllByRole('tab');
+    for (const tab of tabs) {
+      const panel = container.querySelector(`#${tab.getAttribute('aria-controls')}`);
+      expect(panel).not.toBeNull();
+      expect(panel).toHaveAttribute('role', 'tabpanel');
+      expect(panel).toHaveAttribute('aria-labelledby', tab.id);
+      expect((panel as HTMLElement).hidden).toBe(tab.getAttribute('aria-selected') !== 'true');
+    }
+  });
+
   it('moves between categories with the arrow keys', async () => {
     render(
       <MemoryRouter>
@@ -63,7 +79,10 @@ describe('MenuPage', () => {
     const pizzas = await screen.findByRole('tab', { name: 'Pizzas' });
     pizzas.focus();
     await userEvent.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'Drinks' })).toHaveAttribute('aria-selected', 'true');
+    const drinks = screen.getByRole('tab', { name: 'Drinks' });
+    expect(drinks).toHaveAttribute('aria-selected', 'true');
+    expect(drinks).toHaveFocus();
+    expect(screen.getByText('Nothing in this category right now.')).toBeVisible();
   });
 });
 
