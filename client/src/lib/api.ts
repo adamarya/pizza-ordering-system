@@ -81,3 +81,6 @@ export const fetchQuote = (body: QuoteRequest, signal?: AbortSignal) =>
     body: JSON.stringify(body),
     signal,
   });
+
+// Payments (S2-12, S2-13). The publishable key is public by design; the server never sends the secret key.
+export const fetchPaymentConfig = () => getJson<{ publishableKey: string }>('/api/payments/config');
