@@ -81,6 +81,8 @@ npm test          # server and client test suites (the API tests reset the datab
 npm run typecheck
 ```
 
+The server tests delete and reload every catalog, settings, and account row in the database named by `DATABASE_URL`. Point it only at a local or CI database, never at the Azure database. CI also runs `npm audit --omit=dev --audit-level=high`, so a high or critical vulnerability in a package that ships to the site blocks the merge.
+
 ## Repository layout
 
 ```
