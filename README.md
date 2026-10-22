@@ -57,6 +57,18 @@ npm run demo                     # http://localhost:3000, Ctrl+C to stop
 
 Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
 
+## Payments (Stripe sandbox, Sprint 2)
+
+Payment runs in a Stripe sandbox only; the server refuses live keys. Without keys the site works as before and `GET /api/payments/config` reports that online payment is unavailable.
+
+| Setting | Value | Where |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | Restricted key `rk_test_...` with write access to PaymentIntents (preferred over a full `sk_test_` key) | `server/.env` locally, web app environment variables on Azure |
+| `STRIPE_PUBLISHABLE_KEY` | `pk_test_...` (public by design) | same |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_...` from the webhook endpoint `https://<site>/api/payments/webhook`, listening for `payment_intent.succeeded`, `payment_intent.payment_failed`, and `payment_intent.canceled` | same |
+
+Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints a signing secret for `STRIPE_WEBHOOK_SECRET`. Card numbers are typed only into Stripe's hosted fields and never reach this server; orders are written as placed from the verified webhook, not from the confirmation page. Never paste keys into code, issues, chat, or the discussion board.
+
 ## What Sprint 1 delivers
 
 | Screen | Route | Backlog |
