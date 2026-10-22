@@ -2,7 +2,7 @@
 
 CS492 Capstone Project II, Group 1: Adam Arya (Scrum Master), Aaron Aguirre (Product Owner), Emmanuella Ahinkrah, and Paul Banda.
 
-A responsive website where a customer browses the menu, configures a pizza, and sees an itemized, server-calculated bill. Sprint 1 Goal: a guest customer can browse the menu, configure an item, and see a correct, itemized bill on a phone or desktop browser, running on the automated pipeline.
+A responsive Pizza Restaurant Online Ordering System. Sprint 1 covers the menu, item configuration, cart, and server-calculated quotes. Sprint 2 adds manager-editable store profile settings, public store and gallery pages, order confirmation, and a private order-status link.
 
 ## Stack
 
@@ -27,7 +27,8 @@ npm install
 docker compose up -d
 # ...or create a database named "pizza" with user "pizza" / password "pizza" in your local PostgreSQL.
 
-cp .env.example server/.env      # then edit DATABASE_URL if your database differs
+cp .env.example server/.env      # edit DATABASE_URL if your database differs
+# Also replace MANAGER_SETTINGS_TOKEN with a long, random secret value.
 npm run db:generate --workspace server
 npm run db:migrate               # creates the tables
 npm run db:seed                  # loads the sample menu and test accounts
@@ -57,6 +58,22 @@ npm run demo                     # http://localhost:3000, Ctrl+C to stop
 
 Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
 
+## Sprint 2 features added in this branch
+
+| Feature | Route / endpoint | Notes |
+|---|---|---|
+| Public store profile, contact details and hours | `/store`, `GET /api/store` | Values are read from `StoreSettings`; address opens map directions. |
+| Manager-editable store profile | `/store/settings`, `PUT /api/store/settings` | Server validates all fields and requires `Authorization: Bearer <MANAGER_SETTINGS_TOKEN>`. Set the token only in `server/.env` or the deployment environment. |
+| Photo gallery | `/gallery` | Responsive gallery entries are rendered from a data list. |
+| Place order and confirmation | `/cart`, `/order/confirmation/:reference`, `POST /api/orders` | Server re-quotes using current menu data, creates a unique order number and stores item/total snapshots. |
+| Private order status | `/order/status/:reference`, `GET /api/orders/status/:reference`, token-protected `PATCH /api/orders/:orderNumber/status` | Uses a cryptographically random 256-bit reference; invalid references return 404. The page polls for status updates. |
+
+**Payment limitation:** this project does not process real payments yet. Orders record `paymentStatus=NOT_PROCESSED` and show the server-calculated order total transparently; do not represent it as an actual card charge. A payment-provider integration is required before real charging can be enabled.
+
+The manager settings token is a temporary protection mechanism for this sprint, not a replacement for the planned full staff login/session system. Keep it private and rotate it if exposed. The manager settings page never stores the token in browser storage.
+
+Run the new database migration with `npm run db:migrate` locally or `npm run db:deploy --workspace server` in deployment/CI after generating the Prisma client.
+
 ## What Sprint 1 delivers
 
 | Screen | Route | Backlog |
@@ -70,6 +87,8 @@ Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh
 | `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
+| `GET /api/store`, `PUT /api/store/settings` | Public profile read and token-protected manager update |
+| `POST /api/orders`, `GET /api/orders/status/:reference`, token-protected `PATCH /api/orders/:orderNumber/status` | Persist order snapshots and read order status via unguessable reference |
 | `GET /health` | Build version and database status |
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
