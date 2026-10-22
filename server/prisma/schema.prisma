@@ -25,6 +25,8 @@ model StoreSettings {
   description        String
   streetAddress      String
   phone              String
+  email              String   @default("")
+  openingHours       Json     @default("{}")
   taxRateBps         Int     // tax in basis points: 100 = 1%, so 8.25% is stored as 825
   deliveryFeeCents   Int     // money is whole cents, never decimals: $3.99 is 399
   deliveryFeeTaxable Boolean @default(false) // store setting; default is NOT taxed (Table 21)
@@ -111,4 +113,52 @@ model UserAccount {
   isDisabled     Boolean   @default(false)
   failedAttempts Int       @default(0) // counts wrong passwords, for lockout
   lockedUntil    DateTime? // empty unless the account is locked
+}
+
+
+enum OrderStatus {
+  RECEIVED
+  IN_PROGRESS
+  READY
+  COMPLETED
+}
+
+enum OrderFulfillment {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentStatus {
+  NOT_PROCESSED
+  PAID
+  FAILED
+}
+
+model Order {
+  id                  String           @id @default(uuid()) @db.Uuid
+  orderNumber         String           @unique
+  publicReference     String           @unique
+  createdAt           DateTime         @default(now())
+  status              OrderStatus      @default(RECEIVED)
+  fulfillment         OrderFulfillment
+  subtotalCents       Int
+  discountCents       Int
+  taxCents            Int
+  deliveryFeeCents    Int
+  tipCents            Int
+  totalCents          Int
+  paymentStatus       PaymentStatus    @default(NOT_PROCESSED)
+  lines               OrderLine[]
+}
+
+model OrderLine {
+  id                  String   @id @default(uuid()) @db.Uuid
+  orderId             String   @db.Uuid
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  name                String
+  options             String
+  instructions        String
+  quantity            Int
+  unitPriceCents      Int
+  extendedPriceCents  Int
 }
