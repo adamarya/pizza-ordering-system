@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MAX_QUANTITY, toQuoteRequest, useCart } from '../cart/CartContext';
 import { useQuote } from '../cart/useQuote';
-import { fetchMenu, type Placement } from '../lib/api';
+import { createOrder, fetchMenu, type Placement } from '../lib/api';
 import { formatCents } from '../lib/money';
 
 // Cart screen (S1-24, PB-05). Layout, fulfillment toggle, tip options, and summary design by
@@ -15,6 +15,9 @@ const placementText: Record<Placement, string> = { WHOLE: '', LEFT: ' (left half
 
 export function CartPage() {
   const { cart, dispatch } = useCart();
+  const navigate = useNavigate();
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [orderError, setOrderError] = useState('');
   const request = useMemo(() => (cart.lines.length ? toQuoteRequest(cart) : null), [cart]);
   const { quote, error, loading } = useQuote(request);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
@@ -37,6 +40,21 @@ export function CartPage() {
       </section>
     );
   }
+
+  const submitOrder = async () => {
+    if (!quote || quote.hasErrors || loading || cart.lines.length === 0) return;
+    setCreatingOrder(true);
+    setOrderError('');
+    try {
+      const order = await createOrder(toQuoteRequest(cart));
+      dispatch({ type: 'clear' });
+      navigate(`/order/confirmation/${order.publicReference}`);
+    } catch (e) {
+      setOrderError((e as Error).message);
+    } finally {
+      setCreatingOrder(false);
+    }
+  };
 
   const onCustomTip = (value: string) => {
     setCustomTip(value);
@@ -171,6 +189,7 @@ export function CartPage() {
           </fieldset>
 
           {error && <p role="alert">{error}</p>}
+          {orderError && <p role="alert" className="error-text">{orderError}</p>}
           {quote && (
             <div aria-live="polite">
               <div className="row">
@@ -204,13 +223,14 @@ export function CartPage() {
             </div>
           )}
 
-          <button type="button" className="checkout-btn" disabled aria-describedby="checkout-note">
-            Continue to checkout
+          <button type="button" className="checkout-btn" onClick={submitOrder}
+            disabled={!quote || quote.hasErrors || loading || creatingOrder} aria-describedby="checkout-note">
+            {creatingOrder ? 'Placing order…' : 'Place demo order'}
           </button>
           <p id="checkout-note" className="muted small">
             {quote?.hasErrors
-              ? 'Fix the items marked above before checking out.'
-              : 'Checkout and payment open in Sprint 2.'}
+              ? 'Fix the items marked above before placing the order.'
+              : 'This creates an order record and confirmation. Payment processing is not enabled in this project demo.'}
           </p>
         </aside>
       </div>
