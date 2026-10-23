@@ -1,7 +1,9 @@
-import { config } from './config.js';
-import { createApp } from './app.js';
+import { Router } from 'express';
+import { catalogRouter } from './catalog/catalog.routes.js';
+import { cartRouter } from './cart/cart.routes.js';
+import { storeRouter } from './store/store.routes.js';
 
-const app = createApp();
-app.listen(config.PORT, () => {
-  console.log(`Pizza ordering API listening on http://localhost:${config.PORT}`);
-});
+export const apiRouter = Router();
+apiRouter.use(catalogRouter);
+apiRouter.use(cartRouter);
+apiRouter.use(storeRouter);
