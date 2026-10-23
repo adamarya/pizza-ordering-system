@@ -4,6 +4,7 @@ import { App } from './App';
 
 describe('App shell', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
   });
 
@@ -16,7 +17,7 @@ describe('App shell', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(nav).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Menu' })[0]).toHaveAttribute('href', '/menu');
-    expect(screen.getByRole('link', { name: 'Cart' })).toHaveAttribute('href', '/cart');
+    expect(screen.getByRole('link', { name: 'Cart, 0 items' })).toHaveAttribute('href', '/cart');
   });
 
   it('offers a skip link to the main content for keyboard users', () => {
