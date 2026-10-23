@@ -109,13 +109,12 @@ main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 16px; }
 .tip-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 .row { display: flex; justify-content: space-between; padding: 4px 0; }
 .grand-total { border-top: 2px solid var(--line); margin-top: 6px; padding-top: 10px; font-size: 1.15rem; font-weight: 800; }
-.checkout-btn { width: 100%; margin-top: 16px; }
 
 .skip-link { position: absolute; left: -9999px; }
 .skip-link:focus { left: 16px; top: 8px; background: #fff; padding: 8px; z-index: 10; }
 
 
-/* Sprint 2 store information, manager settings, order confirmation and private status pages. */
+/* Sprint 2 public store information and gallery pages. */
 .info-page .info-description { max-width: 72ch; font-size: 1.05rem; }
 .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
 .info-grid .card { min-width: 0; }
@@ -123,28 +122,11 @@ main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 16px; }
 .hours-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .hours-list dt { font-weight: 700; }
 .hours-list dd { margin: 0; text-align: right; }
-.settings-form { max-width: 760px; }
-.hours-editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-.success-text { color: var(--ok-ink); font-weight: 700; }
 .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; margin-top: 20px; }
 .gallery-card { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .gallery-card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--line); }
 .gallery-card figcaption { padding: 12px 14px; }
-.order-confirmation { max-width: 760px; margin: 0 auto; }
-.order-lines { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 10px; }
-.order-lines li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.order-lines p { margin: 3px 0; }
-.status-steps { list-style: none; padding: 0; margin: 24px 0; display: grid; gap: 0; }
-.status-step { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-left: 3px solid var(--line); background: var(--surface); }
-.status-step.is-current { border-left-color: var(--brand); background: #fff7f7; }
-.status-step h2 { margin: 0 0 3px; }
-.status-step p { margin: 0; color: var(--muted); }
-.status-dot { flex: 0 0 32px; height: 32px; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 50%; font-weight: 800; }
-.status-step.is-current .status-dot { border-color: var(--brand); background: var(--brand); color: #fff; }
-.status-current-label { margin-left: auto; color: var(--brand); font-size: .85rem; font-weight: 800; }
 @media (max-width: 720px) {
   .info-grid { grid-template-columns: 1fr; }
-  .hours-editor { grid-template-columns: 1fr; }
   .site-header nav { flex-wrap: wrap; gap: 10px 14px; }
-  .order-lines li { align-items: flex-start; }
 }

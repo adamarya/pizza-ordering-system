@@ -5,10 +5,7 @@ import { CartPage } from './pages/CartPage';
 import { ItemPage } from './pages/ItemPage';
 import { MenuPage } from './pages/MenuPage';
 import { StorePage } from './pages/StorePage';
-import { StoreSettingsPage } from './pages/StoreSettingsPage';
 import { GalleryPage } from './pages/GalleryPage';
-import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
-import { OrderStatusPage } from './pages/OrderStatusPage';
 
 // Shared page shell and navigation (S1-11, PB-15), with the Sprint 1 screens:
 //   /menu           Menu page (S1-14, S1-16)
@@ -38,7 +35,6 @@ function Shell() {
           <NavLink to="/menu">Menu</NavLink>
           <NavLink to="/store">Our Store</NavLink>
           <NavLink to="/gallery">Gallery</NavLink>
-          <NavLink to="/store/settings">Store Settings</NavLink>
           <NavLink to="/cart" aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}>
             Cart{count > 0 && <span className="cart-count">{count}</span>}
           </NavLink>
@@ -51,10 +47,7 @@ function Shell() {
           <Route path="/menu/:itemId" element={<ItemPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/store" element={<StorePage />} />
-          <Route path="/store/settings" element={<StoreSettingsPage />} />
           <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/order/confirmation/:reference" element={<OrderConfirmationPage />} />
-          <Route path="/order/status/:reference" element={<OrderStatusPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

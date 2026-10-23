@@ -20,7 +20,6 @@ describe('App shell', () => {
     expect(screen.getByRole('link', { name: 'Cart, 0 items' })).toHaveAttribute('href', '/cart');
     expect(screen.getByRole('link', { name: 'Our Store' })).toHaveAttribute('href', '/store');
     expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('href', '/gallery');
-    expect(screen.getByRole('link', { name: 'Store Settings' })).toHaveAttribute('href', '/store/settings');
   });
 
   it('offers a skip link to the main content for keyboard users', () => {
