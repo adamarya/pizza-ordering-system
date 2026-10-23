@@ -113,3 +113,7 @@ main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 16px; }
 
 .skip-link { position: absolute; left: -9999px; }
 .skip-link:focus { left: 16px; top: 8px; background: #fff; padding: 8px; z-index: 10; }
+
+/* Card payment (S2-13): errors use .error-text and are stated in words, not color alone. */
+.card-payment { display: grid; gap: 16px; }
+.card-payment h2 { font-size: 1.1rem; margin: 0; }
