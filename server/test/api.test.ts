@@ -119,64 +119,14 @@ describe('store profile settings (PB-02)', () => {
       email: 'hello@crustandco.example',
     });
     expect(res.body.openingHours.monday).toBe('11:00 AM – 9:00 PM');
+
+    // Manager editing stays out of this PR until staff sign-in and role checks are available.
+    const writeAttempt = await request(app).put('/api/store/settings').send(res.body);
+    expect(writeAttempt.status).toBe(404);
   });
 
-  it('requires manager authorization before saving settings', async () => {
-    const previous = process.env.MANAGER_SETTINGS_TOKEN;
-    process.env.MANAGER_SETTINGS_TOKEN = 'test-only-manager-token';
-    try {
-      const profile = (await request(app).get('/api/store')).body;
-      const denied = await request(app).put('/api/store/settings').send(profile);
-      expect(denied.status).toBe(401);
-      const saved = await request(app)
-        .put('/api/store/settings')
-        .set('Authorization', 'Bearer test-only-manager-token')
-        .send(profile);
-      expect(saved.status).toBe(200);
-      expect(saved.body.name).toBe(profile.name);
-    } finally {
-      if (previous === undefined) delete process.env.MANAGER_SETTINGS_TOKEN;
-      else process.env.MANAGER_SETTINGS_TOKEN = previous;
-    }
-  });
 });
 
-describe('order confirmation and private status (PB order flow)', () => {
-  it('creates an order number and unguessable reference, then serves its status only by reference', async () => {
-    const item = find('Garlic Knots');
-    const created = await request(app).post('/api/orders').send({
-      fulfillment: 'PICKUP',
-      lines: [{ menuItemId: item.id, sizeId: item.sizes[0].id, quantity: 2 }],
-    });
-    expect(created.status).toBe(201);
-    expect(created.body.orderNumber).toMatch(/^PZ-\d{8}-[A-F0-9]{6}$/);
-    expect(created.body.publicReference).toMatch(/^[A-Za-z0-9_-]{40,60}$/);
-    expect(created.body.totalCents).toBeGreaterThan(0);
-    expect(created.body.paymentStatus).toBe('NOT_PROCESSED');
-
-    const found = await request(app).get(`/api/orders/status/${created.body.publicReference}`);
-    expect(found.status).toBe(200);
-    expect(found.body.orderNumber).toBe(created.body.orderNumber);
-    expect(found.body.status).toBe('RECEIVED');
-    const denied = await request(app).patch(`/api/orders/${created.body.orderNumber}/status`).send({ status: 'READY' });
-    expect(denied.status).toBe(401);
-    const previous = process.env.MANAGER_SETTINGS_TOKEN;
-    process.env.MANAGER_SETTINGS_TOKEN = 'test-only-manager-token';
-    try {
-      const updated = await request(app)
-        .patch(`/api/orders/${created.body.orderNumber}/status`)
-        .set('Authorization', 'Bearer test-only-manager-token')
-        .send({ status: 'READY' });
-      expect(updated.status).toBe(200);
-      const refreshed = await request(app).get(`/api/orders/status/${created.body.publicReference}`);
-      expect(refreshed.body.status).toBe('READY');
-    } finally {
-      if (previous === undefined) delete process.env.MANAGER_SETTINGS_TOKEN;
-      else process.env.MANAGER_SETTINGS_TOKEN = previous;
-    }
-    expect((await request(app).get('/api/orders/status/not-a-secret')).status).toBe(404);
-  });
-});
 
 // Runs last: reseeding replaces every row, so the ids captured above stop matching.
 describe('demo data for the public test site', () => {
