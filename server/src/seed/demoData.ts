@@ -16,6 +16,7 @@ const STAFF_PASSWORD = 'Staff-Demo-1!';
 export async function seedDemoData(prisma: PrismaClient, options: { accounts?: boolean } = {}) {
   const withAccounts = options.accounts ?? true;
   // 1. Clear old data first, children before parents, so running the seed twice never duplicates rows.
+  await prisma.auditEntry.deleteMany();
   await prisma.itemSize.deleteMany();
   await prisma.menuItem.deleteMany();
   await prisma.category.deleteMany();

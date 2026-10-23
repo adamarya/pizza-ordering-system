@@ -111,4 +111,21 @@ model UserAccount {
   isDisabled     Boolean   @default(false)
   failedAttempts Int       @default(0) // counts wrong passwords, for lockout
   lockedUntil    DateTime? // empty unless the account is locked
+  auditEntries   AuditEntry[]
+}
+
+// Records who changed what (S2-02, PB-11). One row per change, written in the same database
+// transaction as the change, so the record and the change cannot drift apart.
+model AuditEntry {
+  id            String       @id @default(uuid()) @db.Uuid
+  createdAt     DateTime     @default(now())
+  actorId       String?      @db.Uuid // the account that made the change; empty for system actions
+  actor         UserAccount? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action        String       // for example "category.update"
+  entityType    String       // the kind of record changed, for example "Category"
+  entityId      String       // the id of the record changed
+  correlationId String?      // the request id, to match a log line
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
 }
