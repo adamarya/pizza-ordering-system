@@ -2,7 +2,7 @@
 
 CS492 Capstone Project II, Group 1: Adam Arya (Scrum Master), Aaron Aguirre (Product Owner), Emmanuella Ahinkrah, and Paul Banda.
 
-A responsive Pizza Restaurant Online Ordering System. Sprint 1 covers the menu, item configuration, cart, and server-calculated quotes. Sprint 2 adds manager-editable store profile settings, public store and gallery pages, order confirmation, and a private order-status link.
+A responsive Pizza Restaurant Online Ordering System. Sprint 1 covers the menu, item configuration, cart, and server-calculated quotes. This branch adds read-only public store information and a photo gallery.
 
 ## Stack
 
@@ -27,52 +27,34 @@ npm install
 docker compose up -d
 # ...or create a database named "pizza" with user "pizza" / password "pizza" in your local PostgreSQL.
 
-cp .env.example server/.env      # edit DATABASE_URL if your database differs
-# Also replace MANAGER_SETTINGS_TOKEN with a long, random secret value.
+cp .env.example server/.env
+# Edit DATABASE_URL if your local database differs.
 npm run db:generate --workspace server
-npm run db:migrate               # creates the tables
-npm run db:seed                  # loads the sample menu and test accounts
-npm run dev                      # API on http://localhost:3000, site on http://localhost:5173
+npm run db:migrate
+npm run db:seed
+npm run dev
 ```
 
 Open http://localhost:5173. The footer shows the build version and whether the API reached the database.
-
-## Running the built application
-
-```bash
-npm run build
-npm start                        # serves the site and the API together on http://localhost:3000
-```
 
 ## One-command demo (no PostgreSQL install needed)
 
 ```bash
 npm ci
 npm run build
-npm run demo                     # http://localhost:3000, Ctrl+C to stop
+npm run demo
 ```
 
-`npm run demo` starts a private PostgreSQL 16 server from the `embedded-postgres` package (Windows x64, macOS, and Linux), keeps its data in `.demo-db/`, applies the migrations, loads the demo menu, and serves the built site. Delete `.demo-db/` to start from a fresh menu. Run it as a normal user, not as root or Administrator, because PostgreSQL refuses to run with administrator rights.
+`npm run demo` starts a private PostgreSQL 16 server from the `embedded-postgres` package, applies migrations, loads demo data, and serves the built site. Run it as a normal user, not as root or Administrator.
 
-## Shared test environment
-
-Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
-
-## Sprint 2 features added in this branch
+## Sprint 2 features in this branch
 
 | Feature | Route / endpoint | Notes |
 |---|---|---|
-| Public store profile, contact details and hours | `/store`, `GET /api/store` | Values are read from `StoreSettings`; address opens map directions. |
-| Manager-editable store profile | `/store/settings`, `PUT /api/store/settings` | Server validates all fields and requires `Authorization: Bearer <MANAGER_SETTINGS_TOKEN>`. Set the token only in `server/.env` or the deployment environment. |
+| Public store profile, contact details and opening hours | `/store`, `GET /api/store` | Values come from the seeded `StoreSettings` record. The address links to Google Maps directions. |
 | Photo gallery | `/gallery` | Responsive gallery entries are rendered from a data list. |
-| Place order and confirmation | `/cart`, `/order/confirmation/:reference`, `POST /api/orders` | Server re-quotes using current menu data, creates a unique order number and stores item/total snapshots. |
-| Private order status | `/order/status/:reference`, `GET /api/orders/status/:reference`, token-protected `PATCH /api/orders/:orderNumber/status` | Uses a cryptographically random 256-bit reference; invalid references return 404. The page polls for status updates. |
 
-**Payment limitation:** this project does not process real payments yet. Orders record `paymentStatus=NOT_PROCESSED` and show the server-calculated order total transparently; do not represent it as an actual card charge. A payment-provider integration is required before real charging can be enabled.
-
-The manager settings token is a temporary protection mechanism for this sprint, not a replacement for the planned full staff login/session system. Keep it private and rotate it if exposed. The manager settings page never stores the token in browser storage.
-
-Run the new database migration with `npm run db:migrate` locally or `npm run db:deploy --workspace server` in deployment/CI after generating the Prisma client.
+**Scope note:** Store profile editing is intentionally read-only in this PR. Manager editing will be added after staff sign-in and role checks are available. Order persistence, payment authorization, order confirmation, and order status management are out of scope for this PR and should be handled in their assigned stories. The cart continues to display the server-calculated quote but does not submit orders.
 
 ## What Sprint 1 delivers
 
@@ -87,18 +69,20 @@ Run the new database migration with `npm run db:migrate` locally or `npm run db:
 | `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
-| `GET /api/store`, `PUT /api/store/settings` | Public profile read and token-protected manager update |
-| `POST /api/orders`, `GET /api/orders/status/:reference`, token-protected `PATCH /api/orders/:orderNumber/status` | Persist order snapshots and read order status via unguessable reference |
+| `GET /api/store` | Public read-only store profile from seed/database settings |
 | `GET /health` | Build version and database status |
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
 
-## Tests
+## Tests and build
 
 ```bash
-npm test          # server and client test suites (the API tests reset the database in DATABASE_URL to the demo data)
+npm test
+npm run build
 npm run typecheck
 ```
+
+Run these commands locally with Node.js 24 and the project dependencies installed before requesting approval.
 
 ## Repository layout
 
@@ -108,7 +92,7 @@ client/                 React application
   src/components/       shared components
 server/
   src/app.ts            Express app, /health, error handling
-  src/modules/          one folder per module: catalog, cart, store (routes, service, repository, tests)
+  src/modules/          one folder per API module
   prisma/schema.prisma  database schema and migrations
   prisma/seed.ts        synthetic seed data
   test/                 API tests
