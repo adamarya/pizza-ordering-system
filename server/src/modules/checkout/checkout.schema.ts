@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Delivery address schema using US ZIP codes
 export const deliveryAddressSchema = z.object({
   street: z.string().trim().min(3, 'Street address is required'),
   city: z.string().trim().min(2, 'City is required'),
@@ -9,7 +8,6 @@ export const deliveryAddressSchema = z.object({
   unitOrApt: z.string().trim().optional(),
 });
 
-// Reuse the exact line structure from quotes (browser price is NEVER accepted)
 export const checkoutCartLineSchema = z.object({
   menuItemId: z.string().min(1, 'Menu item ID is required'),
   sizeId: z.string().min(1, 'Size ID is required'),
@@ -23,12 +21,12 @@ export const customerDetailsSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
   email: z.string().trim().email('Valid email address is required'),
-  phone: z.string().trim().regex(/^\+?[\d\s-]{10,15}$/, 'Valid phone number is required (at least 10 digits)'),
+  phone: z.string().trim().min(7, 'Valid phone number is required'),
 });
 
 export const checkoutReviewRequestSchema = z.object({
   fulfillmentType: z.enum(['pickup', 'delivery']),
-  requestedTime: z.string().datetime({ message: 'Requested time must be a valid ISO 8601 string' }),
+  requestedTime: z.string().min(1, 'Requested time is required'),
   customer: customerDetailsSchema,
   deliveryAddress: deliveryAddressSchema.optional(),
   items: z.array(checkoutCartLineSchema).min(1, 'Cart cannot be empty'),
@@ -45,5 +43,3 @@ export const checkoutReviewRequestSchema = z.object({
 
 export type CheckoutReviewRequest = z.infer<typeof checkoutReviewRequestSchema>;
 export type DeliveryAddress = z.infer<typeof deliveryAddressSchema>;
-
-
