@@ -2,7 +2,7 @@
 
 CS492 Capstone Project II, Group 1: Adam Arya (Scrum Master), Aaron Aguirre (Product Owner), Emmanuella Ahinkrah, and Paul Banda.
 
-A responsive Pizza Restaurant Online Ordering System. Sprint 1 covers the menu, item configuration, cart, and server-calculated quotes. This branch adds read-only public store information and a photo gallery.
+A responsive website where a customer browses the menu, configures a pizza, and sees an itemized, server-calculated bill. Sprint 1 Goal: a guest customer can browse the menu, configure an item, and see a correct, itemized bill on a phone or desktop browser, running on the automated pipeline.
 
 ## Stack
 
@@ -27,34 +27,47 @@ npm install
 docker compose up -d
 # ...or create a database named "pizza" with user "pizza" / password "pizza" in your local PostgreSQL.
 
-cp .env.example server/.env
-# Edit DATABASE_URL if your local database differs.
+cp .env.example server/.env      # then edit DATABASE_URL if your database differs
 npm run db:generate --workspace server
-npm run db:migrate
-npm run db:seed
-npm run dev
+npm run db:migrate               # creates the tables
+npm run db:seed                  # loads the sample menu and test accounts
+npm run dev                      # API on http://localhost:3000, site on http://localhost:5173
 ```
 
 Open http://localhost:5173. The footer shows the build version and whether the API reached the database.
+
+## Running the built application
+
+```bash
+npm run build
+npm start                        # serves the site and the API together on http://localhost:3000
+```
 
 ## One-command demo (no PostgreSQL install needed)
 
 ```bash
 npm ci
 npm run build
-npm run demo
+npm run demo                     # http://localhost:3000, Ctrl+C to stop
 ```
 
-`npm run demo` starts a private PostgreSQL 16 server from the `embedded-postgres` package, applies migrations, loads demo data, and serves the built site. Run it as a normal user, not as root or Administrator.
+`npm run demo` starts a private PostgreSQL 16 server from the `embedded-postgres` package (Windows x64, macOS, and Linux), keeps its data in `.demo-db/`, applies the migrations, loads the demo menu, and serves the built site. Delete `.demo-db/` to start from a fresh menu. Run it as a normal user, not as root or Administrator, because PostgreSQL refuses to run with administrator rights.
 
-## Sprint 2 features in this branch
+## Shared test environment
 
-| Feature | Route / endpoint | Notes |
+Every merge to `main` that passes CI deploys to https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net (Azure App Service, Mexico Central, with Azure Database for PostgreSQL). The deploy job builds the app, ships it with production dependencies, and the server applies pending migrations when it starts. `/health` on that site shows the deployed version and database status. With the web app setting `SEED_DEMO_DATA=true`, the server loads the demo menu at startup, but only when the database is empty, so it never overwrites data. The demo manager and staff accounts are never created there, because their passwords are in this public repository. The database password and the publish profile are held in Azure and in the repository's Actions secrets, never in the code.
+
+## Payments (Stripe sandbox, Sprint 2)
+
+Payment runs in a Stripe sandbox only; the server refuses live keys. Without keys the site works as before and `GET /api/payments/config` reports that online payment is unavailable.
+
+| Setting | Value | Where |
 |---|---|---|
-| Public store profile, contact details and opening hours | `/store`, `GET /api/store` | Values come from the seeded `StoreSettings` record. The address links to Google Maps directions. |
-| Photo gallery | `/gallery` | Responsive gallery entries are rendered from a data list. |
+| `STRIPE_SECRET_KEY` | Restricted key `rk_test_...` with write access to PaymentIntents (preferred over a full `sk_test_` key) | `server/.env` locally, web app environment variables on Azure |
+| `STRIPE_PUBLISHABLE_KEY` | `pk_test_...` (public by design) | same |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_...` from the webhook endpoint `https://<site>/api/payments/webhook`, listening for `payment_intent.succeeded`, `payment_intent.payment_failed`, and `payment_intent.canceled` | same |
 
-**Scope note:** Store profile editing is intentionally read-only in this PR. Manager editing will be added after staff sign-in and role checks are available. Order persistence, payment authorization, order confirmation, and order status management are out of scope for this PR and should be handled in their assigned stories. The cart continues to display the server-calculated quote but does not submit orders.
+Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints a signing secret for `STRIPE_WEBHOOK_SECRET`. Card numbers are typed only into Stripe's hosted fields and never reach this server; orders are written as placed from the verified webhook, not from the confirmation page. Never paste keys into code, issues, chat, or the discussion board.
 
 ## What Sprint 1 delivers
 
@@ -69,20 +82,29 @@ npm run demo
 | `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
-| `GET /api/store` | Public read-only store profile from seed/database settings |
 | `GET /health` | Build version and database status |
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
 
-## Tests and build
+## Store information and gallery (Sprint 2)
+
+| Screen | Route | Backlog |
+|---|---|---|
+| Store information: name, description, address with a map link, phone, email, opening hours | `/store` | S2-46 to S2-48 |
+| Photo gallery | `/gallery` | S2-46 to S2-48 |
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/store` | Public store profile (name, description, address, phone, email, opening hours) read from the `StoreSettings` row |
+
+The profile is read-only for now. Its values come from the seed data. A manager edit screen will follow once staff sign-in and role checks land.
+
+## Tests
 
 ```bash
-npm test
-npm run build
+npm test          # server and client test suites (the API tests reset the database in DATABASE_URL to the demo data)
 npm run typecheck
 ```
-
-Run these commands locally with Node.js 24 and the project dependencies installed before requesting approval.
 
 ## Repository layout
 
@@ -92,7 +114,7 @@ client/                 React application
   src/components/       shared components
 server/
   src/app.ts            Express app, /health, error handling
-  src/modules/          one folder per API module
+  src/modules/          one folder per module: catalog, cart, store (routes, service, repository, tests)
   prisma/schema.prisma  database schema and migrations
   prisma/seed.ts        synthetic seed data
   test/                 API tests

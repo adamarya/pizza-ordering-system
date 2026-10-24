@@ -109,10 +109,10 @@ main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 16px; }
 .tip-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
 .row { display: flex; justify-content: space-between; padding: 4px 0; }
 .grand-total { border-top: 2px solid var(--line); margin-top: 6px; padding-top: 10px; font-size: 1.15rem; font-weight: 800; }
+.checkout-btn { width: 100%; margin-top: 16px; }
 
 .skip-link { position: absolute; left: -9999px; }
 .skip-link:focus { left: 16px; top: 8px; background: #fff; padding: 8px; z-index: 10; }
-
 
 /* Sprint 2 public store information and gallery pages. */
 .info-page .info-description { max-width: 72ch; font-size: 1.05rem; }

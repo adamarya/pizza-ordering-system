@@ -38,7 +38,6 @@ export function CartPage() {
     );
   }
 
-
   const onCustomTip = (value: string) => {
     setCustomTip(value);
     const dollars = Number(value);
@@ -205,7 +204,14 @@ export function CartPage() {
             </div>
           )}
 
-          <p id="checkout-note" className="muted small">Order submission will be enabled after the payment-authorized order workflow is implemented.</p>
+          <button type="button" className="checkout-btn" disabled aria-describedby="checkout-note">
+            Continue to checkout
+          </button>
+          <p id="checkout-note" className="muted small">
+            {quote?.hasErrors
+              ? 'Fix the items marked above before checking out.'
+              : 'Checkout and payment open in Sprint 2.'}
+          </p>
         </aside>
       </div>
     </section>

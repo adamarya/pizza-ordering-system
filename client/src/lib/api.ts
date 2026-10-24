@@ -82,7 +82,6 @@ export const fetchQuote = (body: QuoteRequest, signal?: AbortSignal) =>
     signal,
   });
 
-
 export interface StoreProfile {
   name: string;
   description: string;
@@ -91,3 +90,5 @@ export interface StoreProfile {
   email: string;
   openingHours: Record<string, string>;
 }
+
+export const fetchStoreProfile = () => getJson<StoreProfile>('/api/store');
