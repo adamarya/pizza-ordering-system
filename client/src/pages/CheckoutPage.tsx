@@ -112,7 +112,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <section className=" page checkout-page">
+    <section className="page checkout-page">
       <header className="checkout-heading">
         <span className="checkout-eyebrow">CRUST &amp; CO.</span>
         <h1>Checkout</h1>
@@ -120,10 +120,12 @@ export function CheckoutPage() {
           Freshly made, almost yours. Complete your details to review your order.
         </p>
 
-        <ol className={step === 'details' ? 'is-current' : 'is-complete'}>
+        <ol>
           <li
-            className={step === 'details' ? 'is-current':  'is-complete': ''}
-            aria-current={step === 'details' ? 'step': undefined}
+            className={
+              step === 'details' ? 'is-current' : 'is-complete'
+            }
+            aria-current={step === 'details' ? 'step' : undefined}
           >
             <span className="checkout-progress-number">1</span>
             <span>Your details</span>
@@ -493,7 +495,9 @@ export function CheckoutPage() {
               </span>
               <div>
                 <strong>Clear pricing</strong>
-                <p>Your subtotal, fees, tax, and total are shown before payment.</p>
+                <p>
+                  Your subtotal, fees, tax, and total are shown before payment.
+                </p>
               </div>
             </div>
 
@@ -541,7 +545,7 @@ export function CheckoutPage() {
               <p>
                 <strong>Fulfillment</strong>
                 <span>
-                  {review.fulfillment === 'PICKUP' ? 'Pickup': 'Delivery'}
+                  {review.fulfillment === 'PICKUP' ? 'Pickup' : 'Delivery'}
                 </span>
               </p>
               <p>
@@ -679,3 +683,5 @@ export function CheckoutPage() {
     </section>
   );
 }
+
+ 
