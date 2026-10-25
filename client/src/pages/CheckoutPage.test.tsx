@@ -37,7 +37,7 @@ describe('CheckoutPage', () => {
   it('shows the server field messages next to the fields', async () => {
     respond(400, { error: 'Please check the highlighted details.', errors: { 'customer.email': 'Valid email address is required.' } });
     renderCheckout();
-    await userEvent.click(screen.getByRole('button', { name: 'Review order' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Review my order' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Please check the highlighted details.');
     const email = screen.getByRole('textbox', { name: 'Email address' });
     expect(email).toHaveAttribute('aria-invalid', 'true');
@@ -57,7 +57,7 @@ describe('CheckoutPage', () => {
     renderCheckout();
     await userEvent.type(screen.getByRole('textbox', { name: 'First name' }), 'Jane');
     await userEvent.click(screen.getByRole('button', { name: 'Review order' }));
-    expect(await screen.findByRole('heading', { name: 'Review your order' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Review my order'})).toBeInTheDocument();
     expect(screen.getByText('$24.65')).toBeInTheDocument();
     const sent = JSON.parse((fetch as unknown as { mock: { calls: [string, { body: string }][] } }).mock.calls[0][1].body);
     expect(sent).toMatchObject({ fulfillment: 'PICKUP', lines: [{ menuItemId: 'p1', quantity: 2 }], customer: { firstName: 'Jane' } });
