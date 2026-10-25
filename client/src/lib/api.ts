@@ -112,3 +112,6 @@ export async function validateCheckout(body: CheckoutValidateRequest): Promise<C
   if (res.ok) return { ok: true, review: json.review };
   return { ok: false, errors: json.errors ?? {}, message: json.error ?? 'Something went wrong. Please try again.' };
 }
+
+// Payments (S2-12, S2-13). The publishable key is public by design; the server never sends the secret key.
+export const fetchPaymentConfig = () => getJson<{ publishableKey: string }>('/api/payments/config');
