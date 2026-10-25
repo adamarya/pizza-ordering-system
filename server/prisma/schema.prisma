@@ -25,8 +25,8 @@ model StoreSettings {
   description        String
   streetAddress      String
   phone              String
-  taxRateBps         Int     // tax in basis points: 100 = 1%, so 8.25% is stored as 825
-  deliveryFeeCents   Int     // money is whole cents, never decimals: $3.99 is 399
+  taxRateBps         Int // tax in basis points: 100 = 1%, so 8.25% is stored as 825
+  deliveryFeeCents   Int // money is whole cents, never decimals: $3.99 is 399
   deliveryFeeTaxable Boolean @default(false) // store setting; default is NOT taxed (Table 21)
   deliveryRadiusKm   Decimal @db.Decimal(5, 2)
   menuVersion        Int     @default(1) // goes up when the menu changes, so browsers know to refresh
@@ -45,7 +45,7 @@ model Category {
 model MenuItem {
   id           String     @id @default(uuid()) @db.Uuid
   name         String
-  description  String?    // the ? means optional
+  description  String? // the ? means optional
   imageKey     String?
   isPizza      Boolean    @default(false) // pizzas get crusts and toppings
   isAvailable  Boolean    @default(true) // temporarily out of stock
@@ -106,7 +106,7 @@ enum Role {
 model UserAccount {
   id             String    @id @default(uuid()) @db.Uuid
   username       String    @unique // no two accounts can share a username
-  passwordHash   String    // a scrambled (Argon2id) version of the password, never the password itself
+  passwordHash   String // a scrambled (Argon2id) version of the password, never the password itself
   role           Role
   isDisabled     Boolean   @default(false)
   failedAttempts Int       @default(0) // counts wrong passwords, for lockout
@@ -130,3 +130,118 @@ model Session {
   @@index([userId])
 }
 
+// ================================================================
+// LAYER 3: ORDERS AND PAYMENT (PB-06, PB-07, PB-08, PB-13)
+// Figure 6 (Order and Payment Class Diagram) and Figure 9 (Order Lifecycle). Added by S2-14.
+// No column here can hold a card number, expiry, or security code: card data stays with Stripe,
+// and only the gateway reference, card brand, and last four digits are kept (S2-16).
+// ================================================================
+
+// Figure 9. PENDING_PAYMENT and PAYMENT_FAILED orders never reach the staff queue.
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_FAILED
+  RECEIVED
+  IN_PROGRESS
+  READY
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum FulfillmentMethod {
+  PICKUP
+  DELIVERY
+}
+
+enum ToppingPlacement {
+  WHOLE
+  LEFT
+  RIGHT
+}
+
+model Order {
+  id               String             @id @default(uuid()) @db.Uuid
+  orderNumber      Int                @unique @default(autoincrement()) // short number staff call out in the kitchen
+  publicRef        String             @unique // 128-bit random, URL-safe; the only id a customer ever sees
+  idempotencyKey   String             @unique // a repeated submission returns this order instead of a new one
+  status           OrderStatus        @default(PENDING_PAYMENT)
+  fulfillment      FulfillmentMethod
+  requestedTime    DateTime? // empty means "as soon as possible"
+  customerName     String
+  customerPhone    String
+  customerEmail    String
+  deliveryAddress  String? // only for DELIVERY; contact details appear only where fulfillment needs them
+  subtotalCents    Int
+  discountCents    Int
+  taxCents         Int
+  deliveryFeeCents Int
+  tipCents         Int
+  totalCents       Int
+  taxRateBps       Int // the rate in force when the order was priced
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  lines            OrderLine[]
+  payment          Payment?
+  statusEvents     OrderStatusEvent[]
+
+  @@index([status, createdAt])
+}
+
+// Snapshot of each cart line at the moment of purchase, so later menu or price changes never
+// alter a placed order (S2-30). menuItemId is kept for reference only, without a foreign key,
+// because items can be retired.
+model OrderLine {
+  id                 String             @id @default(uuid()) @db.Uuid
+  orderId            String             @db.Uuid
+  order              Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  position           Int
+  menuItemId         String             @db.Uuid
+  itemName           String
+  sizeLabel          String
+  crustName          String?
+  quantity           Int
+  instructions       String
+  unitPriceCents     Int
+  extendedPriceCents Int
+  toppings           OrderLineTopping[]
+
+  @@unique([orderId, position])
+}
+
+model OrderLineTopping {
+  id          String           @id @default(uuid()) @db.Uuid
+  orderLineId String           @db.Uuid
+  orderLine   OrderLine        @relation(fields: [orderLineId], references: [id], onDelete: Cascade)
+  name        String
+  placement   ToppingPlacement
+  priceCents  Int // what this topping added to the unit price (half for a half topping)
+}
+
+model Payment {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @unique @db.Uuid
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  gatewayRef     String   @unique // Stripe PaymentIntent id
+  status         String // the gateway's own status word, e.g. requires_payment_method, succeeded
+  amountCents    Int
+  cardBrand      String?
+  last4          String?
+  gatewayEventId String?  @unique // the confirming webhook event; unique, so a replay applies once
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Every status change, with who made it (Figure 9). The customer status page (PB-08) and the audit
+// trail read from here. actor is an account id, or "customer" or "payment-gateway".
+model OrderStatusEvent {
+  id         String       @id @default(uuid()) @db.Uuid
+  orderId    String       @db.Uuid
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  actor      String
+  occurredAt DateTime     @default(now())
+
+  @@index([orderId, occurredAt])
+}

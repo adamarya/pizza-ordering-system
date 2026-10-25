@@ -64,7 +64,8 @@ export interface QuoteLine {
   name: string | null;
   sizeLabel: string | null;
   crustName: string | null;
-  toppings: { name: string; placement: Placement }[];
+  /** priceCents is what this topping added to the unit price (half for a half topping). */
+  toppings: { name: string; placement: Placement; priceCents: number }[];
   quantity: number;
   instructions: string;
   unitPriceCents: number;
@@ -147,8 +148,9 @@ function priceLine(index: number, input: QuoteLineInput, item: CatalogItem | und
       const topping = item.toppings.find((t) => t.id === choice.toppingId);
       if (!topping) return fail('TOPPING_NOT_OFFERED');
       if (!topping.isAvailable) return fail('TOPPING_UNAVAILABLE');
-      toppingCents += choice.placement === 'WHOLE' ? topping.priceCents : divideRoundHalfUp(topping.priceCents, 2);
-      base.toppings.push({ name: topping.name, placement: choice.placement });
+      const charged = choice.placement === 'WHOLE' ? topping.priceCents : divideRoundHalfUp(topping.priceCents, 2);
+      toppingCents += charged;
+      base.toppings.push({ name: topping.name, placement: choice.placement, priceCents: charged });
     }
   }
 
