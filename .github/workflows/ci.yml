@@ -111,3 +111,14 @@ jobs:
           done
           echo "The deployed site did not report a healthy database at /health" >&2
           exit 1
+      - name: Check HTTPS redirect and security headers on the deployed site
+        run: |
+          site=pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net
+          code=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 30 "http://$site/health")
+          echo "http: $code"
+          case "$code" in 301*"https://$site/health"|308*"https://$site/health") ;; *) echo "Plain HTTP is not redirected to HTTPS" >&2; exit 1;; esac
+          headers=$(curl -sI --max-time 30 "https://$site/health")
+          for h in strict-transport-security x-content-type-options x-frame-options content-security-policy; do
+            echo "$headers" | grep -qi "^$h:" || { echo "Missing header: $h" >&2; exit 1; }
+          done
+          echo "HTTPS redirect and security headers present"
