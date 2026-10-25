@@ -12,7 +12,7 @@ function publicProfile(store: {
   email: string;
   openingHours: unknown;
 }) {
-  const parsedHours = z.record(z.string()).safeParse(store.openingHours);
+  const parsedHours = z.record(z.string(), z.string()).safeParse(store.openingHours);
   return {
     name: store.name,
     description: store.description,
