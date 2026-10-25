@@ -3,6 +3,7 @@ import { catalogRouter } from './catalog/catalog.routes.js';
 import { cartRouter } from './cart/cart.routes.js';
 import { paymentsRouter } from './payments/payments.routes.js';
 import { checkoutRouter } from './checkout/checkout.routes.js';
+import { ordersRouter } from './orders/orders.routes.js';
 
 // Each module from Table 19 of the Project Document lives in its own folder under src/modules
 // with its routes, service, and repository. Mount new module routers here.
@@ -10,8 +11,10 @@ import { checkoutRouter } from './checkout/checkout.routes.js';
 //   cart     POST /api/cart/quote                      PB-04, PB-05
 //   payments GET /api/payments/config                  PB-07 (the webhook is mounted in app.ts)
 //   checkout POST /api/checkout/validate                PB-06
+//   orders   POST /api/orders                          PB-06, PB-07 (and the payment webhook handlers)
 export const apiRouter = Router();
 apiRouter.use(catalogRouter);
 apiRouter.use(cartRouter);
 apiRouter.use(paymentsRouter);
 apiRouter.use(checkoutRouter);
+apiRouter.use(ordersRouter);
