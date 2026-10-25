@@ -112,7 +112,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <section className="page checkout-page">
+    <section className=" page checkout-page">
       <header className="checkout-heading">
         <span className="checkout-eyebrow">CRUST &amp; CO.</span>
         <h1>Checkout</h1>
@@ -122,8 +122,8 @@ export function CheckoutPage() {
 
         <ol className="checkout-progress" aria-label="Checkout progress">
           <li
-            className={step === 'details' ? 'is-current' : step !== 'details' ? 'is-complete' : ''}
-            aria-current={step === 'details' ? 'step' : undefined}
+            className={step === 'details' ? 'is-current':  'is-complete': ''}
+            aria-current={step === 'details' ? 'step': undefined}
           >
             <span className="checkout-progress-number">1</span>
             <span>Your details</span>
