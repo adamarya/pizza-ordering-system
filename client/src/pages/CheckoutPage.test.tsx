@@ -56,7 +56,7 @@ describe('CheckoutPage', () => {
     });
     renderCheckout();
     await userEvent.type(screen.getByRole('textbox', { name: 'First name' }), 'Jane');
-    await userEvent.click(screen.getByRole('button', { name: 'Review my order' }));
+   await userEvent.click(screen.getByRole('button', { name: 'Review my order' }));
     expect(await screen.findByRole('heading', { name: 'Review my order'})).toBeInTheDocument();
     expect(screen.getByText('$24.65')).toBeInTheDocument();
     const sent = JSON.parse((fetch as unknown as { mock: { calls: [string, { body: string }][] } }).mock.calls[0][1].body);
