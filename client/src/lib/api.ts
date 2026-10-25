@@ -42,7 +42,7 @@ export interface QuoteLine {
   name: string | null;
   sizeLabel: string | null;
   crustName: string | null;
-  toppings: { name: string; placement: Placement }[];
+  toppings: { name: string; placement: Placement; priceCents: number }[];
   quantity: number;
   instructions: string;
   unitPriceCents: number;

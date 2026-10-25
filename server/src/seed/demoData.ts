@@ -9,20 +9,18 @@ const MANAGER_PASSWORD = 'Manager-Demo-1!';
 const STAFF_PASSWORD = 'Staff-Demo-1!';
 
 /**
- * Replaces all catalog, settings, and account rows with the demo data. Demo accounts use the
- * published passwords above, so they are created only for local development and tests; the
- * public test site passes { accounts: false }.
+ * Loads the demo data. By default it first replaces all catalog, settings, and account rows, which
+ * local development and the tests rely on. The test site passes { reset: false }, so nothing is
+ * ever deleted there. Demo accounts use the published passwords above, so they are created only for
+ * local development and tests; the public test site passes { accounts: false }.
  */
-export async function seedDemoData(prisma: PrismaClient, options: { accounts?: boolean } = {}) {
+export async function seedDemoData(
+  prisma: PrismaClient,
+  options: { accounts?: boolean; reset?: boolean } = {},
+) {
   const withAccounts = options.accounts ?? true;
-  // 1. Clear old data first, children before parents, so running the seed twice never duplicates rows.
-  await prisma.itemSize.deleteMany();
-  await prisma.menuItem.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.crust.deleteMany();
-  await prisma.topping.deleteMany();
-  await prisma.storeSettings.deleteMany();
-  await prisma.userAccount.deleteMany();
+  // 1. Clear old data first (unless reset is false), so running the seed twice never duplicates rows.
+  if (options.reset ?? true) await clearDemoTables(prisma);
 
   // 2. Store settings. Money is in cents, tax in basis points (825 = 8.25%).
   await prisma.storeSettings.create({
@@ -122,4 +120,29 @@ export async function seedDemoData(prisma: PrismaClient, options: { accounts?: b
     data: { username: 'staff', passwordHash: await hash(STAFF_PASSWORD), role: 'STAFF' },
   });
 
+}
+
+/** Clears the seeded tables, children before parents. */
+async function clearDemoTables(prisma: PrismaClient) {
+  await prisma.itemSize.deleteMany();
+  await prisma.menuItem.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.crust.deleteMany();
+  await prisma.topping.deleteMany();
+  await prisma.storeSettings.deleteMany();
+  await prisma.userAccount.deleteMany();
+}
+
+/** True only when every table the seed writes is empty. */
+export async function demoTablesEmpty(prisma: PrismaClient): Promise<boolean> {
+  const counts = await Promise.all([
+    prisma.storeSettings.count(),
+    prisma.category.count(),
+    prisma.menuItem.count(),
+    prisma.itemSize.count(),
+    prisma.crust.count(),
+    prisma.topping.count(),
+    prisma.userAccount.count(),
+  ]);
+  return counts.every((n) => n === 0);
 }

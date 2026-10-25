@@ -69,6 +69,11 @@ Payment runs in a Stripe sandbox only; the server refuses live keys. Without key
 
 Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints a signing secret for `STRIPE_WEBHOOK_SECRET`. Card numbers are typed only into Stripe's hosted fields and never reach this server; orders are written as placed from the verified webhook, not from the confirmation page. Never paste keys into code, issues, chat, or the discussion board.
 
+
+## Accounts and sign-in (Sprint 2)
+
+Every staff member and the manager has an individual account; passwords are stored only as Argon2id hashes. To create the first manager account on a new database, run once from the `server` folder: `MANAGER_USERNAME=<name> MANAGER_PASSWORD=<password of 12 to 128 characters> npm run create-manager`. It refuses to run if a manager already exists, and it prints the username only. The demo seed accounts are for local development and tests only; they are never created on the shared test site.
+
 ## What Sprint 1 delivers
 
 | Screen | Route | Backlog |
@@ -82,6 +87,11 @@ Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints
 | `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
+| `POST /api/orders` | Places an order (Sprint 2, S2-14): reprices the cart, answers 409 if the confirmed total changed, writes the order as pending payment, and returns a Stripe client secret. Requires an `Idempotency-Key` header; a repeated key returns the same order and payment |
+| `POST /api/auth/login` | Signs in with a username and password. Sets an HttpOnly, SameSite=Strict session cookie (30 minutes idle, 8 hours total) and returns the account and a CSRF token. A wrong password, an unknown username and a disabled account all get the same 401 |
+| `GET /api/auth/me` | The signed-in account and CSRF token, or 401 |
+| `POST /api/auth/logout` | Ends the session on the server. Needs the `X-CSRF-Token` header |
+| `POST /api/payments/webhook` | Stripe events, signature-checked; a confirmed payment moves the order to RECEIVED |
 | `GET /health` | Build version and database status |
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
@@ -105,6 +115,8 @@ The profile is read-only for now. Its values come from the seed data. A manager 
 npm test          # server and client test suites (the API tests reset the database in DATABASE_URL to the demo data)
 npm run typecheck
 ```
+
+The server tests delete and reload every catalog, settings, and account row in the database named by `DATABASE_URL`. Point it only at a local or CI database, never at the Azure database. CI also runs `npm audit --omit=dev --audit-level=high`, so a high or critical vulnerability in a package that ships to the site blocks the merge.
 
 ## Repository layout
 
