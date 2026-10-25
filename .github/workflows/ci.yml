@@ -33,6 +33,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # S2-36 (PB-12): block the merge when a package that ships to the site has a known high or
+      # critical vulnerability. Development-only tools are not deployed and are reviewed separately.
+      - name: Dependency vulnerability scan (production packages)
+        run: npm audit --omit=dev --audit-level=high
       - name: Generate the Prisma client
         run: npm run db:generate --workspace server
       - name: Apply database migrations
@@ -96,14 +100,16 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy
       - name: Smoke test the deployed health check
+        # S2-49: passes only when the site answers and reports its database as up. In Sprint 1 a
+        # deploy passed while the live site could not reach its database.
         run: |
           for i in 1 2 3 4 5 6 7 8 9 10; do
             body=$(curl -s --max-time 30 https://pizza-group1-defxdagdbsh6hmfv.mexicocentral-01.azurewebsites.net/health || true)
             echo "$body"
-            if echo "$body" | grep -q '"version"'; then exit 0; fi
+            if echo "$body" | grep -q '"database":"up"'; then exit 0; fi
             sleep 15
           done
-          echo "The deployed site did not answer /health" >&2
+          echo "The deployed site did not report a healthy database at /health" >&2
           exit 1
       - name: Check HTTPS redirect and security headers on the deployed site
         run: |
