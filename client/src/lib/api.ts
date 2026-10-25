@@ -113,5 +113,37 @@ export async function validateCheckout(body: CheckoutValidateRequest): Promise<C
   return { ok: false, errors: json.errors ?? {}, message: json.error ?? 'Something went wrong. Please try again.' };
 }
 
+// Order placement (S2-14, POST /api/orders). The body is the same checkout request the review screen
+// validated, plus the total the customer confirmed. The Idempotency-Key is made once per review, so
+// pressing the button twice or retrying after a dropped connection returns the same order.
+export interface PlaceOrderRequest extends CheckoutValidateRequest {
+  confirmedTotalCents: number;
+}
+export interface PlacedOrder { orderRef: string; orderNumber: number; totalCents: number; clientSecret: string }
+export type PlaceOrderResult =
+  | ({ kind: 'placed' } & PlacedOrder)
+  | { kind: 'quote-changed'; message: string; quote: Quote }
+  | { kind: 'invalid'; message: string; errors: Record<string, string> }
+  | { kind: 'unavailable'; message: string };
+
+export async function placeOrder(body: PlaceOrderRequest, idempotencyKey: string): Promise<PlaceOrderResult> {
+  const res = await fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  const message: string = json.error ?? 'Something went wrong. Please try again.';
+  if (res.ok) return { kind: 'placed', ...(json as PlacedOrder) };
+  if (res.status === 409 && json.quote) return { kind: 'quote-changed', message, quote: json.quote };
+  if (res.status === 400) return { kind: 'invalid', message, errors: json.errors ?? {} };
+  return { kind: 'unavailable', message };
+}
+
+/** A new key for one checkout attempt (letters, digits, and dashes, as the server requires). */
+export function newIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
 // Payments (S2-12, S2-13). The publishable key is public by design; the server never sends the secret key.
 export const fetchPaymentConfig = () => getJson<{ publishableKey: string }>('/api/payments/config');

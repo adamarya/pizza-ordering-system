@@ -1,13 +1,22 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toQuoteRequest, useCart } from '../cart/CartContext';
-import { validateCheckout, type CheckoutReview } from '../lib/api';
+import {
+  newIdempotencyKey,
+  placeOrder,
+  validateCheckout,
+  type CheckoutReview,
+  type CheckoutValidateRequest,
+  type PlacedOrder,
+} from '../lib/api';
 import { formatCents } from '../lib/money';
+import { CardPayment } from '../payments/CardPayment';
 
 // Checkout (S2-07 to S2-10, PB-06). Designed and written by Emmanuella Ahinkrah: fulfillment and
 // requested time, contact details, delivery address, then a server-priced review screen that ends
-// with "Continue to payment". The card form (S2-13, #7) and order placement (S2-14, #12) attach to
-// the payment step once both are merged.
+// with "Continue to payment". That button places the order (S2-14) with the request the review
+// screen validated and the total it showed, then opens Stripe's card fields (S2-13). The order is
+// marked received from Stripe's signed webhook, not from this page.
 
 const field = { width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db' } as const;
 const fieldError = { color: '#b91c1c', fontSize: '0.8rem', marginTop: '4px' } as const;
@@ -34,6 +43,10 @@ export function CheckoutPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [review, setReview] = useState<CheckoutReview | null>(null);
+  // The request the review screen validated, one Idempotency-Key per review, and the placed order.
+  const [request, setRequest] = useState<CheckoutValidateRequest | null>(null);
+  const [orderKey, setOrderKey] = useState<string | null>(null);
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
 
   if (cart.lines.length === 0) {
     return (
@@ -60,15 +73,19 @@ export function CheckoutPage() {
     setMessage(null);
     setIsSubmitting(true);
     try {
-      const result = await validateCheckout({
+      const body: CheckoutValidateRequest = {
         ...toQuoteRequest(cart),
         requestedTime: requestedTime ? new Date(requestedTime).toISOString() : undefined,
         customer: { firstName, lastName, email, phone },
         deliveryAddress:
           fulfillment === 'DELIVERY' ? { street, city, state, zipCode, unitOrApt: unitOrApt || undefined } : undefined,
-      });
+      };
+      const result = await validateCheckout(body);
       if (result.ok) {
         setReview(result.review);
+        setRequest(body);
+        setOrderKey(newIdempotencyKey());
+        setPlaced(null);
         setStep('review');
       } else {
         setErrors(result.errors);
@@ -79,6 +96,48 @@ export function CheckoutPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handlePlaceOrder() {
+    if (!review || !request || !orderKey || isSubmitting) return;
+    if (placed) {
+      setStep('payment'); // same order, already placed for this review
+      return;
+    }
+    setMessage(null);
+    setIsSubmitting(true);
+    try {
+      const result = await placeOrder({ ...request, confirmedTotalCents: review.quote.totalCents }, orderKey);
+      switch (result.kind) {
+        case 'placed':
+          setPlaced(result);
+          setStep('payment');
+          break;
+        case 'quote-changed':
+          // Show the new total and ask again; a new key, because the confirmed total is different.
+          setReview({ ...review, quote: result.quote });
+          setOrderKey(newIdempotencyKey());
+          setMessage(result.message);
+          break;
+        case 'invalid':
+          setErrors(result.errors);
+          setMessage(result.message);
+          setStep('details');
+          break;
+        default:
+          setMessage(result.message);
+      }
+    } catch {
+      setMessage('We could not reach the restaurant. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handlePaid() {
+    if (!placed) return;
+    dispatch({ type: 'clear' });
+    navigate(`/order-placed/${placed.orderRef}`, { replace: true, state: { orderNumber: placed.orderNumber } });
   }
 
   return (
@@ -217,24 +276,26 @@ export function CheckoutPage() {
             <div className="row grand-total"><span>Total</span><span>{formatCents(review.quote.totalCents)}</span></div>
           </div>
 
-          <button type="button" className="checkout-btn" onClick={() => setStep('payment')}>
-            Continue to payment
+          <button type="button" className="checkout-btn" onClick={handlePlaceOrder} disabled={isSubmitting}>
+            {isSubmitting ? 'Placing your order…' : 'Continue to payment'}
           </button>
         </div>
       )}
 
-      {step === 'payment' && review && (
+      {step === 'payment' && review && placed && (
         <div>
           <button type="button" onClick={() => setStep('review')} className="link-button" style={{ marginBottom: '1rem' }}>
             Back to review
           </button>
-          <div style={{ border: '2px dashed #9ca3af', padding: '2rem', textAlign: 'center', borderRadius: '6px', color: '#44403c' }}>
-            <h2 style={{ fontSize: '1.1rem' }}>Payment</h2>
-            <p>
-              Total to pay: <strong>{formatCents(review.quote.totalCents)}</strong>. Card payment opens here once order placement
-              (#12) and the card form (#7) are merged.
-            </p>
-          </div>
+          <p>
+            Order {placed.orderNumber}. Your card is charged {formatCents(placed.totalCents)} when you press Pay.
+          </p>
+          <CardPayment
+            clientSecret={placed.clientSecret}
+            amountLabel={formatCents(placed.totalCents)}
+            returnPath={`/order-placed/${placed.orderRef}`}
+            onPaid={handlePaid}
+          />
         </div>
       )}
     </section>

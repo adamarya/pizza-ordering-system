@@ -28,21 +28,35 @@ export const customerDetailsSchema = z
   })
   .strict();
 
-export const checkoutValidateRequestSchema = quoteRequestSchema
-  .extend({
-    // Empty means "as soon as possible".
-    requestedTime: z.string().datetime({ offset: true, message: 'Please choose a valid date and time.' }).optional(),
-    customer: customerDetailsSchema,
-    deliveryAddress: deliveryAddressSchema.optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.lines.length === 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Your cart is empty.', path: ['lines'] });
-    }
-    if (data.fulfillment === 'DELIVERY' && !data.deliveryAddress) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Delivery address is required for delivery orders.', path: ['deliveryAddress'] });
-    }
-  });
+// The checkout fields without the cross-field rules, so that order placement (S2-14) can extend the
+// same contract with the confirmed total instead of keeping a second copy of these rules.
+export const checkoutFieldsSchema = quoteRequestSchema.extend({
+  // Empty means "as soon as possible".
+  requestedTime: z.string().datetime({ offset: true, message: 'Please choose a valid date and time.' }).optional(),
+  customer: customerDetailsSchema,
+  deliveryAddress: deliveryAddressSchema.optional(),
+});
+
+export function refineCheckout(
+  data: { lines: unknown[]; fulfillment: 'PICKUP' | 'DELIVERY'; deliveryAddress?: unknown },
+  ctx: z.RefinementCtx,
+) {
+  if (data.lines.length === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Your cart is empty.', path: ['lines'] });
+  }
+  if (data.fulfillment === 'DELIVERY' && !data.deliveryAddress) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Delivery address is required for delivery orders.', path: ['deliveryAddress'] });
+  }
+}
+
+export const checkoutValidateRequestSchema = checkoutFieldsSchema.superRefine(refineCheckout);
+
+/** Field messages keyed by path ("customer.email"), the shape the checkout page shows. */
+export function fieldErrors(error: z.ZodError): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const issue of error.issues) errors[issue.path.join('.')] ??= issue.message;
+  return errors;
+}
 
 export type CheckoutValidateRequest = z.infer<typeof checkoutValidateRequestSchema>;
 export type DeliveryAddress = z.infer<typeof deliveryAddressSchema>;
