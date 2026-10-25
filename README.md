@@ -82,6 +82,8 @@ Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints
 | `GET /api/menu` | Categories, items, sizes, crusts, toppings, availability; ETag on the menu version |
 | `GET /api/menu/items/:id` | One item's options |
 | `POST /api/cart/quote` | Prices a cart under the Table 21 rules; validates every field on the server |
+| `POST /api/orders` | Places an order (Sprint 2, S2-14): reprices the cart, answers 409 if the confirmed total changed, writes the order as pending payment, and returns a Stripe client secret. Requires an `Idempotency-Key` header; a repeated key returns the same order and payment |
+| `POST /api/payments/webhook` | Stripe events, signature-checked; a confirmed payment moves the order to RECEIVED |
 | `GET /health` | Build version and database status |
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
