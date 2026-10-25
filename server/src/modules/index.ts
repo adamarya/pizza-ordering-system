@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { catalogRouter } from './catalog/catalog.routes.js';
+import { authRouter } from './auth/auth.routes.js';
 import { cartRouter } from './cart/cart.routes.js';
+import { catalogRouter } from './catalog/catalog.routes.js';
 import { paymentsRouter } from './payments/payments.routes.js';
 import { ordersRouter } from './orders/orders.routes.js';
 import { orderStatusRouter } from './orders/orders.status.js';
@@ -16,5 +17,6 @@ export const apiRouter = Router();
 apiRouter.use(catalogRouter);
 apiRouter.use(cartRouter);
 apiRouter.use(paymentsRouter);
+apiRouter.use(authRouter);
 apiRouter.use(ordersRouter);
 apiRouter.use(orderStatusRouter);
