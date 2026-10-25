@@ -57,8 +57,18 @@ export function createApp() {
     app.get('*', (_req, res) => res.sendFile(path.join(clientDist, 'index.html')));
   }
 
-  // Generic error response; detail stays in the server log.
+  // Error responses. A request the body parser rejects (malformed JSON, a body over the limit)
+  // is the client's mistake, so it gets its own 4xx status and a plain message. Anything else is a
+  // generic 500. Either way the response never carries the error's detail, which stays in the
+  // server log (PB-12).
+  const clientErrors: Record<string, [number, string]> = {
+    'entity.parse.failed': [400, 'The request could not be read. Please try again.'],
+    'entity.too.large': [413, 'The request is too large.'],
+    'encoding.unsupported': [415, 'The request could not be read. Please try again.'],
+  };
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
+    const known = typeof err?.type === 'string' ? clientErrors[err.type] : undefined;
+    if (known) return res.status(known[0]).json({ error: known[1] });
     console.error(err);
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
   };
