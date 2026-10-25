@@ -120,7 +120,7 @@ export function CheckoutPage() {
           Freshly made, almost yours. Complete your details to review your order.
         </p>
 
-        <ol className="checkout-progress" aria-label="Checkout progress">
+        <ol className={step === 'details' ? 'is-current' : 'is-complete'}>
           <li
             className={step === 'details' ? 'is-current':  'is-complete': ''}
             aria-current={step === 'details' ? 'step': undefined}
