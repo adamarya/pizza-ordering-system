@@ -37,7 +37,7 @@ describe('CheckoutPage', () => {
   it('shows the server field messages next to the fields', async () => {
     respond(400, { error: 'Please check the highlighted details.', errors: { 'customer.email': 'Valid email address is required.' } });
     renderCheckout();
-    await userEvent.click(screen.getByRole('button', { name: 'Review my order' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Review your order' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Please check the highlighted details.');
     const email = screen.getByRole('textbox', { name: 'Email address' });
     expect(email).toHaveAttribute('aria-invalid', 'true');
