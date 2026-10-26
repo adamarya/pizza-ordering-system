@@ -460,7 +460,7 @@ export function CheckoutPage() {
               className="checkout-btn checkout-primary-button"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Checking your order…' : 'Review my order'}
+              {isSubmitting ? 'Checking your order…' : 'Review your order'}
               {!isSubmitting && <span aria-hidden="true"> →</span>}
             </button>
 
