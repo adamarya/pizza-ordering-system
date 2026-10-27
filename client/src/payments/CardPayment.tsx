@@ -58,27 +58,30 @@ function CardForm({ amountLabel, returnPath, onPaid }: CardPaymentProps) {
     if (!stripe || !elements || paying) return;
     setPaying(true);
     setError(null);
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: new URL(returnPath, window.location.origin).toString() },
-      redirect: 'if_required',
-    });
-    if (result.error) {
-      // A declined card or invalid field: the cart and the details already entered stay as they are.
-      setError(result.error.message ?? 'The payment did not go through. Please check the card details.');
+    try {
+      const result = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: new URL(returnPath, window.location.origin).toString() },
+        redirect: 'if_required',
+      });
+      if (result.error) {
+        setError(result.error.message ?? 'The payment did not go through. Please check the card details.');
+        setPaying(false);
+        return;
+      }
+  const status = result.paymentIntent?.status;
+      if (status === 'succeeded' || status === 'processing' || status === 'requires_capture') {
+        onPaid(result.paymentIntent!.id);
+      } else {
+        setError('The payment was not completed. Please try again.');
+        setPaying(false);
+      }
+    } catch {
+      setError('We could not confirm the payment. Please check your connection and try again.');
       setPaying(false);
-      return;
     }
-    const status = result.paymentIntent?.status;
-    if (status === 'succeeded' || status === 'processing' || status === 'requires_capture') {
-      onPaid(result.paymentIntent!.id);
-    } else {
-      setError('The payment was not completed. Please try again.');
-      setPaying(false);
-    }
-  }
 
-  return (
+ return (
     <form onSubmit={submit} aria-labelledby="card-heading" className="card-payment">
       <h2 id="card-heading">Payment</h2>
       <PaymentElement onReady={() => setReady(true)} />
