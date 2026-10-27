@@ -120,7 +120,7 @@ export function CheckoutPage() {
           Freshly made, almost yours. Complete your details to review your order.
         </p>
 
-       <ol className="checkout-progress">
+        <ol className="checkout-progress">
           <li
             className={
               step === 'details' ? 'is-current' : 'is-complete'
