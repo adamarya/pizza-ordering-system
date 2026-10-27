@@ -1,7 +1,7 @@
 /* Visual design follows Emmanuella Ahinkrah's cart prototype (warm stone neutrals, black brand with a
    red ampersand). Layout works from 360px phones through 1280px desktops (PB-15), and text colors
    meet WCAG 2.1 AA contrast against their backgrounds. */
-: root {
+:root {
   --ink: #1c1917;
   --muted: #57534e;
   --line: #e7e5e4;
