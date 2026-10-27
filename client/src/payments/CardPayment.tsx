@@ -69,19 +69,20 @@ function CardForm({ amountLabel, returnPath, onPaid }: CardPaymentProps) {
         setPaying(false);
         return;
       }
-  const status = result.paymentIntent?.status;
+        const status = result.paymentIntent?.status;
       if (status === 'succeeded' || status === 'processing' || status === 'requires_capture') {
         onPaid(result.paymentIntent!.id);
       } else {
         setError('The payment was not completed. Please try again.');
         setPaying(false);
       }
-    } catch {
+        } catch {
       setError('We could not confirm the payment. Please check your connection and try again.');
       setPaying(false);
     }
+  }
 
- return (
+  return (
     <form onSubmit={submit} aria-labelledby="card-heading" className="card-payment">
       <h2 id="card-heading">Payment</h2>
       <PaymentElement onReady={() => setReady(true)} />
