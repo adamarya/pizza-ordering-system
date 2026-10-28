@@ -72,7 +72,7 @@ Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints
 
 ## Accounts and sign-in (Sprint 2)
 
-Every staff member and the manager has an individual account; passwords are stored only as Argon2id hashes. To create the first manager account on a new database, run once from the `server` folder: `MANAGER_USERNAME=<name> MANAGER_PASSWORD=<password of 12 to 128 characters> npm run create-manager`. It refuses to run if a manager already exists, and it prints the username only. The demo seed accounts are for local development and tests only; they are never created on the shared test site.
+Every staff member and the manager has an individual account; passwords are stored only as Argon2id hashes. To create the first manager account on a new database, run once from the `server` folder: `MANAGER_USERNAME=<name> npm run create-manager` (after `npm run build`; use `npm run create-manager:dev` to run from source). It asks for the password (12 to 128 characters) without showing it, or takes it from `MANAGER_PASSWORD` when that is set. It refuses to run if a manager already exists, and it prints the username only. On the shared test site, run it from the web app's SSH console in the Azure portal: `cd /home/site/wwwroot/server && MANAGER_USERNAME=<name> npm run create-manager`. The demo seed accounts are for local development and tests only; they are never created on the shared test site.
 
 ## What Sprint 1 delivers
 
