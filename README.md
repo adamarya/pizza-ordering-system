@@ -72,7 +72,7 @@ Locally, `stripe listen --forward-to localhost:3000/api/payments/webhook` prints
 
 ## Accounts and sign-in (Sprint 2)
 
-Every staff member and the manager has an individual account; passwords are stored only as Argon2id hashes. To create the first manager account on a new database, run once from the `server` folder: `MANAGER_USERNAME=<name> MANAGER_PASSWORD=<password of 12 to 128 characters> npm run create-manager`. It refuses to run if a manager already exists, and it prints the username only. The demo seed accounts are for local development and tests only; they are never created on the shared test site.
+Every staff member and the manager has an individual account; passwords are stored only as Argon2id hashes. To create the first manager account on a new database, run once from the `server` folder: `MANAGER_USERNAME=<name> npm run create-manager` (after `npm run build`; use `npm run create-manager:dev` to run from source). It asks for the password (12 to 128 characters) without showing it, or takes it from `MANAGER_PASSWORD` when that is set. It refuses to run if a manager already exists, and it prints the username only. On the shared test site, run it from the web app's SSH console in the Azure portal: `cd /home/site/wwwroot/server && MANAGER_USERNAME=<name> npm run create-manager`. The demo seed accounts are for local development and tests only; they are never created on the shared test site.
 
 ## What Sprint 1 delivers
 
@@ -91,6 +91,7 @@ Every staff member and the manager has an individual account; passwords are stor
 | `POST /api/auth/login` | Signs in with a username and password. Sets an HttpOnly, SameSite=Strict session cookie (30 minutes idle, 8 hours total) and returns the account and a CSRF token. A wrong password, an unknown username and a disabled account all get the same 401 |
 | `GET /api/auth/me` | The signed-in account and CSRF token, or 401 |
 | `POST /api/auth/logout` | Ends the session on the server. Needs the `X-CSRF-Token` header |
+| `/api/admin/...` | Menu maintenance (Sprint 2, S2-27, S2-28). Needs a signed-in session and the `X-CSRF-Token` header on changes. The manager adds and edits categories, items, sizes, crusts, and toppings, with prices in cents and display order, and retires items; staff may only list the full menu (`GET /api/admin/menu`) and switch availability (`PATCH /api/admin/availability`). Every change raises the menu version, so customers get it on their next menu load. Nothing is deleted; orders keep their own copy of names and prices |
 | `POST /api/payments/webhook` | Stripe events, signature-checked; a confirmed payment moves the order to RECEIVED |
 | `GET /health` | Build version and database status |
 
