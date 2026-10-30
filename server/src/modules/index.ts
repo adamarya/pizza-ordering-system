@@ -6,6 +6,7 @@ import { menuAdminRouter } from './menuAdmin/menuAdmin.routes.js';
 import { paymentsRouter } from './payments/payments.routes.js';
 import { ordersRouter } from './orders/orders.routes.js';
 import { orderStatusRouter } from './orders/orders.status.js';
+import { staffRouter } from './staff/staff.routes.js';
 
 // Each module from Table 19 of the Project Document lives in its own folder under src/modules
 // with its routes, service, and repository. Mount new module routers here.
@@ -15,6 +16,7 @@ import { orderStatusRouter } from './orders/orders.status.js';
 //   admin    /api/admin/menu, categories, items, sizes, crusts, toppings, availability   PB-10
 //   orders   POST /api/orders                          PB-06, PB-07 (and the payment webhook handlers)
 //            GET /api/orders/status/:reference         PB-08 (confirmation and status pages)
+//   staff    GET /api/staff/orders   PB-09
 export const apiRouter = Router();
 apiRouter.use(catalogRouter);
 apiRouter.use(cartRouter);
@@ -23,3 +25,4 @@ apiRouter.use(authRouter);
 apiRouter.use(menuAdminRouter);
 apiRouter.use(ordersRouter);
 apiRouter.use(orderStatusRouter);
+apiRouter.use(staffRouter);

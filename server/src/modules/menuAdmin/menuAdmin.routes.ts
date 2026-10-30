@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { z } from 'zod';
 import { getPrisma } from '../../db.js';
 import { requireSession } from '../auth/auth.routes.js';
+import { requireRole } from '../auth/requireRole.js';
 import { fieldErrors } from './menuAdmin.errors.js';
 import * as schema from './menuAdmin.schema.js';
 import * as menu from './menuAdmin.service.js';
@@ -13,9 +14,8 @@ import * as menu from './menuAdmin.service.js';
 // the menu and switch availability during a shift. Every change must carry the session's CSRF
 // token in X-CSRF-Token.
 //
-// The two guards below are local on purpose: S2-05 (role checks on every staff endpoint) and S2-35
-// (CSRF on every state-changing request) give the whole API shared versions, and these routes
-// switch to them then.
+// The role check is the shared requireRole (S2-05). The CSRF check below is still local on
+// purpose: S2-35 gives the whole API a shared version, and these routes switch to it then.
 export const menuAdminRouter = Router();
 
 const adminLimiter = rateLimit({
@@ -25,12 +25,6 @@ const adminLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again.' },
 });
-
-type Role = 'STAFF' | 'MANAGER';
-const allow =
-  (...roles: Role[]) =>
-  (_req: Request, res: Response, next: NextFunction) =>
-    roles.includes(res.locals.auth.user.role) ? next() : res.status(403).json({ error: 'You do not have access to this.' });
 
 function sameSecret(a: string, b: string) {
   const x = Buffer.from(a);
@@ -45,8 +39,8 @@ function csrf(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-const manager = [requireSession, allow('MANAGER'), csrf];
-const staffOrManager = [requireSession, allow('STAFF', 'MANAGER'), csrf];
+const manager = [requireSession, requireRole('MANAGER'), csrf];
+const staffOrManager = [requireSession, requireRole('STAFF', 'MANAGER'), csrf];
 
 /** Parses the body and the :id parameter, runs the change, and maps the outcome to a status. */
 function handle<S extends z.ZodTypeAny>(
@@ -79,7 +73,7 @@ function handle<S extends z.ZodTypeAny>(
 
 menuAdminRouter.use('/admin', adminLimiter);
 
-menuAdminRouter.get('/admin/menu', requireSession, allow('STAFF', 'MANAGER'), async (_req, res, next) => {
+menuAdminRouter.get('/admin/menu', requireSession, requireRole('STAFF', 'MANAGER'), async (_req, res, next) => {
   try {
     res.set('Cache-Control', 'no-store');
     res.json(await menu.getAdminMenu(getPrisma()));
