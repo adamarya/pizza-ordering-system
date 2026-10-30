@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { formatCents } from '../lib/money';
 import {
   NotSignedIn,
@@ -49,6 +50,11 @@ export function ManageMenuPage() {
       <section className="page">
         <h1>Manage the menu</h1>
         <p role="alert">Please sign in as the manager or a staff member to manage the menu.</p>
+        <p>
+          <Link className="button" to="/sign-in?next=/manage/menu">
+            Staff sign-in
+          </Link>
+        </p>
       </section>
     );
   }

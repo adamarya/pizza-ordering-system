@@ -52,6 +52,7 @@ describe('ManageMenuPage', () => {
     serve(null);
     open();
     expect(await screen.findByRole('alert')).toHaveTextContent(/sign in as the manager or a staff member/i);
+    expect(screen.getByRole('link', { name: 'Staff sign-in' })).toHaveAttribute('href', '/sign-in?next=/manage/menu');
   });
 
   it('lets the manager change a price, sending whole cents and the CSRF token', async () => {
