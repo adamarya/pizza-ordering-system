@@ -13,6 +13,7 @@ import { createInterface } from 'node:readline';
 import { Writable } from 'node:stream';
 import { PrismaClient } from '@prisma/client';
 import { createFirstManager } from '../modules/auth/firstManager.js';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '../modules/auth/password.js';
 
 /** Reads one line from the terminal without echoing it. */
 function askHidden(question: string): Promise<string> {
@@ -41,7 +42,9 @@ if (username && !password) {
     console.error('Set MANAGER_PASSWORD, or run this in a terminal so it can ask for the password.');
     process.exit(1);
   }
-  password = await askHidden('Password for the new manager (12 to 128 characters, not shown): ');
+  password = await askHidden(
+    `Password for the new manager (${MIN_PASSWORD_LENGTH} to ${MAX_PASSWORD_LENGTH} characters, not shown): `,
+  );
   const again = await askHidden('Type it again: ');
   if (password !== again) {
     console.error('The two passwords did not match. Nothing was changed.');
