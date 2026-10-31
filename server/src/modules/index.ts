@@ -4,6 +4,7 @@ import { cartRouter } from './cart/cart.routes.js';
 import { catalogRouter } from './catalog/catalog.routes.js';
 import { menuAdminRouter } from './menuAdmin/menuAdmin.routes.js';
 import { paymentsRouter } from './payments/payments.routes.js';
+import { checkoutRouter } from './checkout/checkout.routes.js';
 import { ordersRouter } from './orders/orders.routes.js';
 import { orderStatusRouter } from './orders/orders.status.js';
 import { staffRouter } from './staff/staff.routes.js';
@@ -13,6 +14,7 @@ import { staffRouter } from './staff/staff.routes.js';
 //   catalog  GET /api/menu, GET /api/menu/items/:id   PB-03, PB-04
 //   cart     POST /api/cart/quote                      PB-04, PB-05
 //   payments GET /api/payments/config                  PB-07 (the webhook is mounted in app.ts)
+//   checkout POST /api/checkout/validate                PB-06
 //   admin    /api/admin/menu, categories, items, sizes, crusts, toppings, availability   PB-10
 //   orders   POST /api/orders                          PB-06, PB-07 (and the payment webhook handlers)
 //            GET /api/orders/status/:reference         PB-08 (confirmation and status pages)
@@ -21,6 +23,7 @@ export const apiRouter = Router();
 apiRouter.use(catalogRouter);
 apiRouter.use(cartRouter);
 apiRouter.use(paymentsRouter);
+apiRouter.use(checkoutRouter);
 apiRouter.use(authRouter);
 apiRouter.use(menuAdminRouter);
 apiRouter.use(ordersRouter);

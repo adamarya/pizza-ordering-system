@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MAX_QUANTITY, toQuoteRequest, useCart } from '../cart/CartContext';
 import { useQuote } from '../cart/useQuote';
 import { fetchMenu, type Placement } from '../lib/api';
@@ -15,6 +15,7 @@ const placementText: Record<Placement, string> = { WHOLE: '', LEFT: ' (left half
 
 export function CartPage() {
   const { cart, dispatch } = useCart();
+  const navigate = useNavigate();
   const request = useMemo(() => (cart.lines.length ? toQuoteRequest(cart) : null), [cart]);
   const { quote, error, loading } = useQuote(request);
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
@@ -204,14 +205,20 @@ export function CartPage() {
             </div>
           )}
 
-          <button type="button" className="checkout-btn" disabled aria-describedby="checkout-note">
+          <button
+            type="button"
+            className="checkout-btn"
+            disabled={!quote || quote.hasErrors}
+            aria-describedby={quote?.hasErrors ? 'checkout-note' : undefined}
+            onClick={() => navigate('/checkout')}
+          >
             Continue to checkout
           </button>
-          <p id="checkout-note" className="muted small">
-            {quote?.hasErrors
-              ? 'Fix the items marked above before checking out.'
-              : 'Checkout and payment open in Sprint 2.'}
-          </p>
+          {quote?.hasErrors && (
+            <p id="checkout-note" className="muted small">
+              Fix the items marked above before checking out.
+            </p>
+          )}
         </aside>
       </div>
     </section>
