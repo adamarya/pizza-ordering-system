@@ -6,24 +6,18 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
 import { ManageMenuPage } from './pages/ManageMenuPage';
 import { MenuPage } from './pages/MenuPage';
-<<<<<<< HEAD
 import { OrderPlacedPage } from './pages/OrderPlacedPage';
-=======
 import { StorePage } from './pages/StorePage';
 import { GalleryPage } from './pages/GalleryPage';
->>>>>>> origin/main
 import { SignInPage } from './pages/SignInPage';
 
 // Shared page shell and navigation (S1-11, PB-15), with the Sprint 1 screens:
 //   /menu           Menu page (S1-14, S1-16)
 //   /menu/:itemId   Item configuration (S1-15, S1-19, S1-20, S1-22)
 //   /cart           Cart screen (S1-24)
-<<<<<<< HEAD
 //   /checkout       Checkout, review, and card payment (S2-07 to S2-10, S2-13, S2-14)
-//   /order-placed/:orderRef  Thank-you page after payment, until S2-18 and S2-20 replace it
-=======
+//   /order-placed/:orderRef  Thank-you page after payment, linking to the order confirmation (S2-18)
 //   /manage/menu    Menu maintenance for the manager and staff (S2-27, S2-28)
->>>>>>> origin/main
 //   /sign-in        Staff and manager sign-in (S2-03)
 export function App() {
   return (
