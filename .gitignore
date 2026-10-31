@@ -10,3 +10,5 @@ coverage/
 !.vscode/extensions.json
 *.tsbuildinfo
 .demo-db/
+e2e/report/
+test-results/
