@@ -2,6 +2,7 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import { CartProvider, useCart } from './cart/CartContext';
 import { HealthBadge } from './components/HealthBadge';
 import { CartPage } from './pages/CartPage';
+import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
 import { MenuPage } from './pages/MenuPage';
 import { SignInPage } from './pages/SignInPage';
@@ -44,6 +45,7 @@ function Shell() {
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/menu/:itemId" element={<ItemPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
