@@ -75,7 +75,8 @@ function order(overrides: Record<string, unknown> = {}) {
       },
     ],
     confirmedTotalCents: 3426 + 283, // 2 x 1713, tax 282.65 -> 283
-    contact: { name: 'Test Customer', phone: '505-555-0100', email: 'customer@example.com' },
+    requestedTime: '2030-06-15T18:00:00-06:00', // inside store hours, so the tests do not depend on the clock
+    customer: { firstName: 'Test', lastName: 'Customer', phone: '505-555-0100', email: 'customer@example.com' },
     ...overrides,
   };
 }
@@ -168,12 +169,33 @@ describe('POST /api/orders (S2-14)', () => {
 
   it('requires an Idempotency-Key header and valid contact details', async () => {
     expect((await post(order(), null)).status).toBe(400);
-    const bad = await post(order({ contact: { name: '', phone: 'abc', email: 'not-an-email' } }));
+    const bad = await post(order({ customer: { firstName: '', lastName: 'Customer', phone: 'abc', email: 'not-an-email' } }));
     expect(bad.status).toBe(400);
-    expect(bad.body.fields.map((f: { path: string }) => f.path).sort()).toEqual(['contact.email', 'contact.name', 'contact.phone']);
+    expect(Object.keys(bad.body.errors).sort()).toEqual(['customer.email', 'customer.firstName', 'customer.phone']);
     const noAddress = await post(order({ fulfillment: 'DELIVERY', confirmedTotalCents: 3709 + 399 }));
     expect(noAddress.status).toBe(400);
-    expect(noAddress.body.fields[0].path).toBe('deliveryAddress');
+    expect(Object.keys(noAddress.body.errors)).toEqual(['deliveryAddress']);
+  });
+
+  it('applies the checkout store rules again when the order is placed', async () => {
+    const before = await prisma.order.count();
+    const early = await post(order({ requestedTime: '2030-06-15T08:00:00-06:00' }));
+    expect(early.status).toBe(400);
+    expect(early.body.errors.requestedTime).toMatch(/outside our hours/);
+    const away = { street: '100 Main St', city: 'Boulder', state: 'CO', zipCode: '80301' };
+    const far = await post(order({ fulfillment: 'DELIVERY', deliveryAddress: away, confirmedTotalCents: 3709 + 399 }));
+    expect(far.status).toBe(400);
+    expect(far.body.errors['deliveryAddress.zipCode']).toMatch(/80301/);
+    expect(await prisma.order.count()).toBe(before);
+  });
+
+  it('stores the customer name and a one-line delivery address', async () => {
+    const address = { street: '1600 Glenarm Place', unitOrApt: 'Suite 4', city: 'Denver', state: 'co', zipCode: '80202' };
+    const res = await post(order({ fulfillment: 'DELIVERY', deliveryAddress: address, confirmedTotalCents: 3426 + 399 + 283 }));
+    expect(res.status).toBe(201);
+    const saved = await prisma.order.findUniqueOrThrow({ where: { publicRef: res.body.orderRef } });
+    expect(saved.customerName).toBe('Test Customer');
+    expect(saved.deliveryAddress).toBe('1600 Glenarm Place, Suite 4, Denver, CO 80202');
   });
 
   it('writes no order when online payment is not configured', async () => {
