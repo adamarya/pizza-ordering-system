@@ -104,6 +104,15 @@ describe('GET /api/orders/status/:reference', () => {
     expect(res.body).toMatchObject({ status: 'PENDING_PAYMENT', paymentStatus: 'PENDING', card: null });
   });
 
+  it('reports a declined payment as failed', async () => {
+    // The payment webhook sets PAYMENT_FAILED on a declined card; orders.test.ts covers that step
+    // ("marks a declined payment as failed"). This checks what the customer then sees.
+    const failedRef = await makeOrder({ status: 'PAYMENT_FAILED' });
+    const res = await request(app).get(`/api/orders/status/${failedRef}`);
+    expect(res.body).toMatchObject({ status: 'PAYMENT_FAILED', paymentStatus: 'FAILED', card: null });
+    await prisma.order.delete({ where: { publicRef: failedRef } });
+  });
+
   it('never returns the customer name, phone, email, or address', async () => {
     const res = await request(app).get(`/api/orders/status/${paidRef}`);
     const text = JSON.stringify(res.body);
