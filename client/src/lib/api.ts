@@ -82,6 +82,16 @@ export const fetchQuote = (body: QuoteRequest, signal?: AbortSignal) =>
     signal,
   });
 
+export interface StoreProfile {
+  name: string;
+  description: string;
+  streetAddress: string;
+  phone: string;
+  email: string;
+  openingHours: Record<string, string>;
+}
+
+export const fetchStoreProfile = () => getJson<StoreProfile>('/api/store');
 // Checkout (S2-07 to S2-10, POST /api/checkout/validate). The server reprices the cart; the review
 // screen shows the returned quote and never computes money itself.
 export interface CheckoutCustomer { firstName: string; lastName: string; email: string; phone: string }

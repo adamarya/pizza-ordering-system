@@ -25,6 +25,8 @@ model StoreSettings {
   description        String
   streetAddress      String
   phone              String
+  email              String   @default("")
+  openingHours       Json     @default("{}")
   taxRateBps         Int // tax in basis points: 100 = 1%, so 8.25% is stored as 825
   deliveryFeeCents   Int // money is whole cents, never decimals: $3.99 is 399
   deliveryFeeTaxable Boolean @default(false) // store setting; default is NOT taxed (Table 21)

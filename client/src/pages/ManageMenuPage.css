@@ -1,0 +1,14 @@
+/* Menu maintenance screen (S2-27, S2-28). Status is stated in words, not color alone. */
+.manage-menu h2 { font-size: 1.15rem; margin: 24px 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.manage-item { margin-bottom: 12px; padding: 16px; }
+.manage-item-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.manage-item-head h3 { margin: 0; font-size: 1rem; }
+.manage-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #78350f; }
+.manage-badge-retired { background: #e7e5e4; color: #1c1917; }
+.manage-sizes, .manage-options { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+.manage-options li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 14px; }
+.manage-price { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.manage-price label { display: inline-flex; gap: 6px; align-items: center; }
+.manage-price input { width: 6.5rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.manage-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.manage-ok { color: #166534; font-weight: 600; min-height: 1.4em; }
