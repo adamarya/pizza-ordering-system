@@ -4,13 +4,17 @@ import { HealthBadge } from './components/HealthBadge';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
+import { ManageMenuPage } from './pages/ManageMenuPage';
 import { MenuPage } from './pages/MenuPage';
+import { StorePage } from './pages/StorePage';
+import { GalleryPage } from './pages/GalleryPage';
 import { SignInPage } from './pages/SignInPage';
 
 // Shared page shell and navigation (S1-11, PB-15), with the Sprint 1 screens:
 //   /menu           Menu page (S1-14, S1-16)
 //   /menu/:itemId   Item configuration (S1-15, S1-19, S1-20, S1-22)
 //   /cart           Cart screen (S1-24)
+//   /manage/menu    Menu maintenance for the manager and staff (S2-27, S2-28)
 //   /sign-in        Staff and manager sign-in (S2-03)
 export function App() {
   return (
@@ -34,6 +38,8 @@ function Shell() {
         </NavLink>
         <nav aria-label="Main">
           <NavLink to="/menu">Menu</NavLink>
+          <NavLink to="/store">Our Store</NavLink>
+          <NavLink to="/gallery">Gallery</NavLink>
           <NavLink to="/cart" aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}>
             Cart{count > 0 && <span className="cart-count">{count}</span>}
           </NavLink>
@@ -45,6 +51,9 @@ function Shell() {
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/menu/:itemId" element={<ItemPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/store" element={<StorePage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/manage/menu" element={<ManageMenuPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
           <Route path="*" element={<NotFound />} />
