@@ -6,6 +6,8 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
 import { ManageMenuPage } from './pages/ManageMenuPage';
 import { MenuPage } from './pages/MenuPage';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { OrderStatusPage } from './pages/OrderStatusPage';
 import { StorePage } from './pages/StorePage';
 import { GalleryPage } from './pages/GalleryPage';
 import { SignInPage } from './pages/SignInPage';
@@ -56,6 +58,8 @@ function Shell() {
           <Route path="/manage/menu" element={<ManageMenuPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/order/confirmation/:reference" element={<OrderConfirmationPage />} />
+          <Route path="/order/status/:reference" element={<OrderStatusPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
