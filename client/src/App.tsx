@@ -4,6 +4,7 @@ import { HealthBadge } from './components/HealthBadge';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
+import { ManageMenuPage } from './pages/ManageMenuPage';
 import { MenuPage } from './pages/MenuPage';
 import { SignInPage } from './pages/SignInPage';
 
@@ -11,6 +12,7 @@ import { SignInPage } from './pages/SignInPage';
 //   /menu           Menu page (S1-14, S1-16)
 //   /menu/:itemId   Item configuration (S1-15, S1-19, S1-20, S1-22)
 //   /cart           Cart screen (S1-24)
+//   /manage/menu    Menu maintenance for the manager and staff (S2-27, S2-28)
 //   /sign-in        Staff and manager sign-in (S2-03)
 export function App() {
   return (
@@ -45,6 +47,7 @@ function Shell() {
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/menu/:itemId" element={<ItemPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/manage/menu" element={<ManageMenuPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
           <Route path="*" element={<NotFound />} />
