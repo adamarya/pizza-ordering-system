@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { centsToDollars, dollarsToCents } from '../lib/staffApi';
@@ -63,7 +63,8 @@ describe('ManageMenuPage', () => {
     await userEvent.clear(price);
     await userEvent.type(price, '12.5');
     await userEvent.click(within(screen.getByRole('article', { name: 'Pepperoni Party' })).getByRole('button', { name: 'Save' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Pepperoni Party Small is now $12.50.');
+    // The status line is always on the page, so wait for its text rather than for the element.
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Pepperoni Party Small is now $12.50.'));
     const [url, init] = changes()[0];
     expect(url).toBe('/api/admin/sizes/s1');
     expect(JSON.parse(init!.body as string)).toEqual({ priceCents: 1250 });
