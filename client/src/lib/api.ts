@@ -92,3 +92,35 @@ export interface StoreProfile {
 }
 
 export const fetchStoreProfile = () => getJson<StoreProfile>('/api/store');
+// Checkout (S2-07 to S2-10, POST /api/checkout/validate). The server reprices the cart; the review
+// screen shows the returned quote and never computes money itself.
+export interface CheckoutCustomer { firstName: string; lastName: string; email: string; phone: string }
+export interface CheckoutAddress { street: string; city: string; state: string; zipCode: string; unitOrApt?: string }
+export interface CheckoutValidateRequest extends QuoteRequest {
+  requestedTime?: string;
+  customer: CheckoutCustomer;
+  deliveryAddress?: CheckoutAddress;
+}
+export interface CheckoutReview {
+  fulfillment: Fulfillment;
+  requestedTime: string | null;
+  customer: CheckoutCustomer;
+  deliveryAddress: CheckoutAddress | null;
+  quote: Quote;
+}
+export type CheckoutValidateResult =
+  | { ok: true; review: CheckoutReview }
+  | { ok: false; errors: Record<string, string>; message: string };
+
+export async function validateCheckout(body: CheckoutValidateRequest): Promise<CheckoutValidateResult> {
+  const res = await fetch('/api/checkout/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (res.ok) return { ok: true, review: json.review };
+  return { ok: false, errors: json.errors ?? {}, message: json.error ?? 'Something went wrong. Please try again.' };
+}
+// Payments (S2-12, S2-13). The publishable key is public by design; the server never sends the secret key.
+export const fetchPaymentConfig = () => getJson<{ publishableKey: string }>('/api/payments/config');
