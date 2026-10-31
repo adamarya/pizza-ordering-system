@@ -107,6 +107,27 @@ describe('POST /api/cart/quote', () => {
   });
 });
 
+
+describe('store profile settings (PB-02)', () => {
+  it('returns store contact details and opening hours from persisted data', async () => {
+    const res = await request(app).get('/api/store');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      name: 'Crust & Co.',
+      streetAddress: '123 Main Street',
+      phone: '555-0100',
+      email: 'hello@crustandco.example',
+    });
+    expect(res.body.openingHours.monday).toBe('11:00 AM – 9:00 PM');
+
+    // Manager editing stays out of this PR until staff sign-in and role checks are available.
+    const writeAttempt = await request(app).put('/api/store/settings').send(res.body);
+    expect(writeAttempt.status).toBe(404);
+  });
+
+});
+
+
 // Runs last: reseeding replaces every row, so the ids captured above stop matching.
 describe('demo data for the public test site', () => {
   it('loads the menu without the demo accounts when asked to', async () => {

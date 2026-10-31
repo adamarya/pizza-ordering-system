@@ -18,6 +18,8 @@ describe('App shell', () => {
     expect(nav).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'Menu' })[0]).toHaveAttribute('href', '/menu');
     expect(screen.getByRole('link', { name: 'Cart, 0 items' })).toHaveAttribute('href', '/cart');
+    expect(screen.getByRole('link', { name: 'Our Store' })).toHaveAttribute('href', '/store');
+    expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('href', '/gallery');
   });
 
   it('offers a skip link to the main content for keyboard users', () => {
