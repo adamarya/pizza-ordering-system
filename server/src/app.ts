@@ -25,7 +25,7 @@ export function createApp() {
           scriptSrc: ["'self'", stripe],
           frameSrc: ["'self'", stripe],
           connectSrc: ["'self'", stripe],
-          imgSrc: ["'self'", 'data:', stripe],
+          imgSrc: ["'self'", 'data:', 'https://*.stripe.com', 'https://images.unsplash.com'],
         },
       },
     }),
