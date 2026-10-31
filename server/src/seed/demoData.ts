@@ -29,6 +29,16 @@ export async function seedDemoData(
       description: 'Fresh pizza, made to order.',
       streetAddress: '123 Main Street',
       phone: '555-0100',
+      email: 'hello@crustandco.example',
+      openingHours: {
+        monday: '11:00 AM – 9:00 PM',
+        tuesday: '11:00 AM – 9:00 PM',
+        wednesday: '11:00 AM – 9:00 PM',
+        thursday: '11:00 AM – 9:00 PM',
+        friday: '11:00 AM – 10:00 PM',
+        saturday: '12:00 PM – 10:00 PM',
+        sunday: '12:00 PM – 8:00 PM',
+      },
       taxRateBps: 825,
       deliveryFeeCents: 399,
       deliveryFeeTaxable: false, // Table 21: the delivery fee is not taxed by default
