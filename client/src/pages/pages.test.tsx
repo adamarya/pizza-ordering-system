@@ -92,7 +92,7 @@ describe('CartPage', () => {
     lines: [{ lineId: 'l1', menuItemId: 'p1', sizeId: 's1', crustId: 'c1', toppings: [{ toppingId: 't1', placement: 'LEFT' as const }], quantity: 2, instructions: '' }],
   };
 
-  it('shows the server quote and keeps checkout closed until Sprint 2', async () => {
+  it('shows the server quote and opens checkout once the quote is valid', async () => {
     render(
       <MemoryRouter initialEntries={['/cart']}>
         <CartProvider initial={cart}>
@@ -107,7 +107,7 @@ describe('CartPage', () => {
     expect(within(summary).getByText('$21.26')).toBeInTheDocument();
     expect(within(summary).getByText('Tax (8.25%)')).toBeInTheDocument();
     expect(screen.getByText(/Mushrooms \(left half\)/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue to checkout' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continue to checkout' })).toBeEnabled();
   });
 
   it('shows an empty cart message with a way back to the menu', () => {
