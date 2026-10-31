@@ -118,7 +118,7 @@ describe('store profile settings (PB-02)', () => {
       phone: '555-0100',
       email: 'hello@crustandco.example',
     });
-    expect(res.body.openingHours.monday).toBe('11:00 AM – 9:00 PM');
+    expect(res.body.openingHours.monday).toBe('11:00 AM – 10:00 PM');
 
     // Manager editing stays out of this PR until staff sign-in and role checks are available.
     const writeAttempt = await request(app).put('/api/store/settings').send(res.body);
