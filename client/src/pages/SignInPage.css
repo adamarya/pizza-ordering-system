@@ -1,0 +1,6 @@
+/* Staff sign-in (S2-03). */
+.sign-in .card { max-width: 420px; }
+.sign-in-form { display: grid; gap: 8px; }
+.sign-in-form label { font-weight: 600; margin-top: 6px; }
+.sign-in-form input { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.sign-in-form button { margin-top: 10px; }
