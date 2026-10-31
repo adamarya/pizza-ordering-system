@@ -97,6 +97,19 @@ Every staff member and the manager has an individual account; passwords are stor
 
 Design prototypes by Emmanuella Ahinkrah (cart) and Aaron Aguirre (menu and item configuration) are kept in [`docs/prototypes`](docs/prototypes/).
 
+## Store information and gallery (Sprint 2)
+
+| Screen | Route | Backlog |
+|---|---|---|
+| Store information: name, description, address with a map link, phone, email, opening hours | `/store` | S2-46 to S2-48 |
+| Photo gallery | `/gallery` | S2-46 to S2-48 |
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/store` | Public store profile (name, description, address, phone, email, opening hours) read from the `StoreSettings` row |
+
+The profile is read-only for now. Its values come from the seed data. A manager edit screen will follow once staff sign-in and role checks land.
+
 ## Tests
 
 ```bash

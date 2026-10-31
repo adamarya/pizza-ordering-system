@@ -5,8 +5,7 @@ import { useCart } from '../cart/CartContext';
 // Shown after Stripe accepts the payment (S2-13). The customer arrives here from the card form, or
 // from Stripe itself when a payment method needed a redirect (then the URL carries redirect_status).
 // This page only thanks the customer: the order is marked received from Stripe's signed webhook.
-// The full confirmation screen with the order contents is S2-18, and the status page is S2-20; both
-// take over this route when they are built.
+// It links to the full confirmation screen (S2-18) and, from there, the status page (S2-20).
 export function OrderPlacedPage() {
   const { orderRef } = useParams();
   const [params] = useSearchParams();
@@ -41,9 +40,12 @@ export function OrderPlacedPage() {
       <p>
         Your order reference is <strong>{orderRef}</strong>. Keep it to check on your order.
       </p>
-      <Link className="button" to="/menu">
-        Back to the menu
-      </Link>
+      <p>
+        <Link className="button" to={`/order/confirmation/${orderRef}`}>
+          See your order confirmation
+        </Link>
+      </p>
+      <Link to="/menu">Back to the menu</Link>
     </section>
   );
 }

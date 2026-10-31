@@ -34,6 +34,7 @@ describe('OrderPlacedPage', () => {
     expect(screen.getByRole('heading', { name: 'Thank you for your order' })).toBeInTheDocument();
     expect(screen.getByText('ref_abc123')).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: 'See your order confirmation' })).toHaveAttribute('href', '/order/confirmation/ref_abc123');
   });
 
   it('clears the cart when Stripe returns after a successful redirect payment', () => {
