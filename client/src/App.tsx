@@ -9,6 +9,7 @@ import { MenuPage } from './pages/MenuPage';
 import { StorePage } from './pages/StorePage';
 import { GalleryPage } from './pages/GalleryPage';
 import { SignInPage } from './pages/SignInPage';
+import { StaffQueuePage } from './pages/StaffQueuePage';
 
 // Shared page shell and navigation (S1-11, PB-15), with the Sprint 1 screens:
 //   /menu           Menu page (S1-14, S1-16)
@@ -16,6 +17,7 @@ import { SignInPage } from './pages/SignInPage';
 //   /cart           Cart screen (S1-24)
 //   /manage/menu    Menu maintenance for the manager and staff (S2-27, S2-28)
 //   /sign-in        Staff and manager sign-in (S2-03)
+//   /staff/queue    Staff order queue and status changes (S2-22, S2-23)
 export function App() {
   return (
     <CartProvider>
@@ -56,6 +58,7 @@ function Shell() {
           <Route path="/manage/menu" element={<ManageMenuPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/staff/queue" element={<StaffQueuePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

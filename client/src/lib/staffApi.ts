@@ -62,6 +62,42 @@ export const setCrustSurcharge = (me: Me, id: string, surchargeCents: number) =>
 export const setAvailability = (me: Me, kind: 'item' | 'crust' | 'topping', id: string, isAvailable: boolean) =>
   change(me, 'PATCH', '/api/admin/availability', { kind, id, isAvailable });
 
+// The staff order queue (S2-22) and status changes (S2-23).
+export type OpenStatus = 'RECEIVED' | 'IN_PROGRESS' | 'READY';
+export type KitchenStatus = 'IN_PROGRESS' | 'READY' | 'COMPLETED';
+export interface QueueTopping { name: string; placement: 'WHOLE' | 'LEFT' | 'RIGHT' }
+export interface QueueLine {
+  itemName: string;
+  sizeLabel: string;
+  crustName: string | null;
+  quantity: number;
+  instructions: string | null;
+  toppings: QueueTopping[];
+}
+export interface QueueOrder {
+  orderNumber: number;
+  status: OpenStatus;
+  fulfillment: 'PICKUP' | 'DELIVERY';
+  requestedTime: string | null;
+  createdAt: string;
+  customerName: string;
+  lines: QueueLine[];
+}
+
+/** Open orders, oldest first, for signed-in staff and managers. */
+export async function fetchQueue(): Promise<QueueOrder[]> {
+  const res = await fetch('/api/staff/orders');
+  if (res.status === 401) throw new NotSignedIn();
+  if (res.status === 403) throw new Error('This account cannot see the order queue.');
+  if (!res.ok) throw new Error('The order queue could not be loaded. Please try again.');
+  return (await res.json()).orders;
+}
+
+/** Moves an order one step. The server refuses skipped steps and orders someone else just changed. */
+export const moveOrder = (me: Me, orderNumber: number, status: KitchenStatus) =>
+  change(me, 'POST', `/api/staff/orders/${orderNumber}/status`, { status });
+
+
 /**
  * Reads a dollar amount typed by the manager ("12.99", "$12.5", "12") as whole cents, by reading
  * the digits as text, so no decimal arithmetic touches money (Table 21). Returns null for anything
