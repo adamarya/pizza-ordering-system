@@ -6,6 +6,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ItemPage } from './pages/ItemPage';
 import { MenuPage } from './pages/MenuPage';
 import { OrderPlacedPage } from './pages/OrderPlacedPage';
+import { SignInPage } from './pages/SignInPage';
 
 // Shared page shell and navigation (S1-11, PB-15), with the Sprint 1 screens:
 //   /menu           Menu page (S1-14, S1-16)
@@ -13,6 +14,7 @@ import { OrderPlacedPage } from './pages/OrderPlacedPage';
 //   /cart           Cart screen (S1-24)
 //   /checkout       Checkout, review, and card payment (S2-07 to S2-10, S2-13, S2-14)
 //   /order-placed/:orderRef  Thank-you page after payment, until S2-18 and S2-20 replace it
+//   /sign-in        Staff and manager sign-in (S2-03)
 export function App() {
   return (
     <CartProvider>
@@ -48,6 +50,7 @@ function Shell() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-placed/:orderRef" element={<OrderPlacedPage />} />
+          <Route path="/sign-in" element={<SignInPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
