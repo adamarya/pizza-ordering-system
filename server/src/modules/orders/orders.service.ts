@@ -3,7 +3,7 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import { getStoreSettings, loadCatalogForQuote, toRates } from '../catalog/catalog.repository.js';
 import { calculateQuote, type Quote } from '../cart/pricing.js';
 import type { GatewayEvent, PaymentGateway } from '../payments/gateway.js';
-import type { PlaceOrderRequest } from './orders.schema.js';
+import type { OrderInput } from './orders.schema.js';
 
 // OrderService (Figures 6 to 9, S2-14, S2-15, S2-16). Depends on the PaymentGateway interface, not
 // on Stripe, so the tests run against a fake gateway.
@@ -20,7 +20,7 @@ const newPublicRef = () => randomBytes(16).toString('base64url'); // 128 bits, U
 export async function placeOrder(
   prisma: PrismaClient,
   gateway: PaymentGateway,
-  input: PlaceOrderRequest,
+  input: OrderInput,
   idempotencyKey: string,
 ): Promise<PlaceOrderResult> {
   // A repeated submission with the same key returns the order already written (S2-15).
