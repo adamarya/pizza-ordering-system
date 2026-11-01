@@ -3,8 +3,8 @@ import rateLimit from 'express-rate-limit';
 import { getPrisma } from '../../db.js';
 import { getStoreSettings, loadCatalogForQuote, toRates } from '../catalog/catalog.repository.js';
 import { calculateQuote } from '../cart/pricing.js';
-import { checkoutValidateRequestSchema } from './checkout.schema.js';
-import { CHECKOUT_SETTINGS, isWithinStoreHours } from './checkout.settings.js';
+import { checkoutRuleErrors } from './checkout.rules.js';
+import { checkoutValidateRequestSchema, fieldErrors } from './checkout.schema.js';
 
 // POST /api/checkout/validate (Table 25; S2-07, S2-08, S2-09, S2-10). Written by Emmanuella
 // Ahinkrah. Checks the fulfillment time, delivery address, and contact details on the server, and
@@ -25,29 +25,10 @@ checkoutRouter.post('/checkout/validate', validateLimiter, async (req, res, next
   try {
     const parsed = checkoutValidateRequestSchema.safeParse(req.body);
     if (!parsed.success) {
-      const errors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) errors[issue.path.join('.')] ??= issue.message;
-      return res.status(400).json({ error: 'Please check the highlighted details.', errors });
+      return res.status(400).json({ error: 'Please check the highlighted details.', errors: fieldErrors(parsed.error) });
     }
     const data = parsed.data;
-    const errors: Record<string, string> = {};
-
-    // Requested time: inside store hours and at least the lead time ahead. Empty means as soon as
-    // possible, which needs the store to be open now.
-    const now = new Date();
-    const when = data.requestedTime ? new Date(data.requestedTime) : now;
-    if (data.requestedTime && when.getTime() < now.getTime() + CHECKOUT_SETTINGS.leadMinutes * 60_000) {
-      errors.requestedTime = `Please choose a time at least ${CHECKOUT_SETTINGS.leadMinutes} minutes from now.`;
-    } else if (!isWithinStoreHours(when)) {
-      errors.requestedTime = 'That time is outside our hours (11:00 AM to 10:00 PM).';
-    }
-
-    if (data.fulfillment === 'DELIVERY' && data.deliveryAddress) {
-      const zip = data.deliveryAddress.zipCode.slice(0, 5);
-      if (!(CHECKOUT_SETTINGS.deliveryZipCodes as readonly string[]).includes(zip)) {
-        errors['deliveryAddress.zipCode'] = `We don't deliver to ${zip} yet. Pickup is available.`;
-      }
-    }
+    const errors = checkoutRuleErrors(data);
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ error: 'Please check the highlighted details.', errors });
     }

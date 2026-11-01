@@ -1,13 +1,23 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toQuoteRequest, useCart } from '../cart/CartContext';
-import { validateCheckout, type CheckoutReview } from '../lib/api';
+import {
+  newIdempotencyKey,
+  placeOrder,
+  validateCheckout,
+  type CheckoutReview,
+  type CheckoutValidateRequest,
+  type PlacedOrder,
+} from '../lib/api';
 import { formatCents } from '../lib/money';
+import { CardPayment } from '../payments/CardPayment';
 
 // Checkout (S2-07 to S2-10, PB-06).
 // CRUST & CO. styling follows Emmanuella's index.html checkout prototype.
 // Keep server-side validation and server-calculated prices.
-// Payment integration will be connected when #7 and #12 are merged.
+// "Continue to payment" places the order (S2-14) with the request the review screen validated and
+// the total it showed, then opens Stripe's card fields (S2-13). The order is marked received from
+// Stripe's signed webhook, not from this page.
 
 type CheckoutStep = 'details' | 'review' | 'payment';
 
@@ -34,6 +44,10 @@ export function CheckoutPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [review, setReview] = useState<CheckoutReview | null>(null);
+  // The request the review screen validated, one Idempotency-Key per review, and the placed order.
+  const [request, setRequest] = useState<CheckoutValidateRequest | null>(null);
+  const [orderKey, setOrderKey] = useState<string | null>(null);
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
 
   if (cart.lines.length === 0) {
     return (
@@ -71,7 +85,7 @@ export function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await validateCheckout({
+      const body: CheckoutValidateRequest = {
         ...toQuoteRequest(cart),
         requestedTime: requestedTime
           ? new Date(requestedTime).toISOString()
@@ -92,10 +106,14 @@ export function CheckoutPage() {
                 unitOrApt: unitOrApt || undefined,
               }
             : undefined,
-      });
+      };
+      const result = await validateCheckout(body);
 
       if (result.ok) {
         setReview(result.review);
+        setRequest(body);
+        setOrderKey(newIdempotencyKey());
+        setPlaced(null);
         setStep('review');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -109,6 +127,49 @@ export function CheckoutPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handlePlaceOrder() {
+    if (!review || !request || !orderKey || isSubmitting) return;
+    if (placed) {
+      setStep('payment'); // same order, already placed for this review
+      return;
+    }
+    setMessage(null);
+    setIsSubmitting(true);
+    try {
+      const result = await placeOrder({ ...request, confirmedTotalCents: review.quote.totalCents }, orderKey);
+      switch (result.kind) {
+        case 'placed':
+          setPlaced(result);
+          setStep('payment');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          break;
+        case 'quote-changed':
+          // Show the new total and ask again; a new key, because the confirmed total is different.
+          setReview({ ...review, quote: result.quote });
+          setOrderKey(newIdempotencyKey());
+          setMessage(result.message);
+          break;
+        case 'invalid':
+          setErrors(result.errors);
+          setMessage(result.message);
+          setStep('details');
+          break;
+        default:
+          setMessage(result.message);
+      }
+    } catch {
+      setMessage('We could not reach the restaurant. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handlePaid() {
+    if (!placed) return;
+    dispatch({ type: 'clear' });
+    navigate(`/order-placed/${placed.orderRef}`, { replace: true, state: { orderNumber: placed.orderNumber } });
   }
 
   return (
@@ -633,12 +694,11 @@ export function CheckoutPage() {
             <button
               type="button"
               className="checkout-btn checkout-primary-button"
-              onClick={() => {
-                setStep('payment');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={handlePlaceOrder}
+              disabled={isSubmitting}
             >
-              Continue to payment <span aria-hidden="true"> →</span>
+              {isSubmitting ? 'Placing your order…' : 'Continue to payment'}
+              {!isSubmitting && <span aria-hidden="true"> →</span>}
             </button>
 
             <p className="checkout-secure-note">
@@ -648,7 +708,7 @@ export function CheckoutPage() {
         </div>
       )}
 
-      {step === 'payment' && review && (
+      {step === 'payment' && review && placed && (
         <section className="checkout-payment-card card">
           <button
             type="button"
@@ -661,23 +721,16 @@ export function CheckoutPage() {
           <span className="checkout-step-label">STEP 03</span>
           <h2>Payment</h2>
           <p className="muted">
-            Your order total is{' '}
-            <strong>{formatCents(review.quote.totalCents)}</strong>.
+            Order {placed.orderNumber}. Your card is charged{' '}
+            <strong>{formatCents(placed.totalCents)}</strong> when you press Pay.
           </p>
 
-          <div className="checkout-payment-placeholder">
-            <span className="checkout-payment-icon" aria-hidden="true">
-              ♧
-            </span>
-            <h3>Payment setup is coming next</h3>
-            <p>
-              The card payment form and order placement will connect here when
-              the payment work (#7) and order placement work (#12) are merged.
-            </p>
-            <p className="checkout-hint">
-              No payment has been collected on this screen.
-            </p>
-          </div>
+          <CardPayment
+            clientSecret={placed.clientSecret}
+            amountLabel={formatCents(placed.totalCents)}
+            returnPath={`/order-placed/${placed.orderRef}`}
+            onPaid={handlePaid}
+          />
         </section>
       )}
     </section>
