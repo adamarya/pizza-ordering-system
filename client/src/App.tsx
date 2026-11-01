@@ -7,6 +7,8 @@ import { ItemPage } from './pages/ItemPage';
 import { ManageMenuPage } from './pages/ManageMenuPage';
 import { MenuPage } from './pages/MenuPage';
 import { OrderPlacedPage } from './pages/OrderPlacedPage';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { OrderStatusPage } from './pages/OrderStatusPage';
 import { StorePage } from './pages/StorePage';
 import { GalleryPage } from './pages/GalleryPage';
 import { SignInPage } from './pages/SignInPage';
@@ -60,6 +62,8 @@ function Shell() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-placed/:orderRef" element={<OrderPlacedPage />} />
           <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/order/confirmation/:reference" element={<OrderConfirmationPage />} />
+          <Route path="/order/status/:reference" element={<OrderStatusPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
