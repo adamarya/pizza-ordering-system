@@ -1,6 +1,6 @@
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../src/app.js';
+import { createApp, errorLogText } from '../src/app.js';
 import { disconnect, getPrisma } from '../src/db.js';
 
 // Error responses (S2-31 follow-up from the review of #14, PB-12): a rejected request body gets a
@@ -39,5 +39,36 @@ describe('error responses', () => {
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(console.error).toHaveBeenCalled(); // the detail goes to the server log instead
+  });
+
+  it('keeps customer details from a failed database call out of the server log', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // The shape of a Prisma validation error: the first line names the call, and the lines after it
+    // repeat the call's arguments, which here hold a customer's contact details.
+    const err = new Error(
+      'Invalid `prisma.order.create()` invocation in\n/app/server/dist/orders.repository.js:40:7\n\n' +
+        '  data: {\n    customerName: "Jane Example",\n    phone: "5055550123",\n    deliveryAddress: "12 Main St"\n  }',
+    );
+    err.name = 'PrismaClientValidationError';
+    vi.spyOn(getPrisma().storeSettings, 'findFirst').mockRejectedValueOnce(err);
+    const res = await request(app).get('/api/menu');
+    expect(res.status).toBe(500);
+    const text = logged.mock.calls.flat().map(String).join('\n');
+    expect(text).toContain('PrismaClientValidationError: Invalid `prisma.order.create()` invocation in');
+    expect(text).not.toMatch(/Jane|5055550123|Main St/);
+  });
+});
+
+describe('errorLogText', () => {
+  it('keeps the type, code, first line, and stack frames', () => {
+    const err = Object.assign(new Error('Unique constraint failed\nfields: (`email`) value "a@b.example"'), { code: 'P2002' });
+    const text = errorLogText(err);
+    expect(text.split('\n')[0]).toBe('Error P2002: Unique constraint failed');
+    expect(text).toMatch(/\n\s+at /);
+    expect(text).not.toContain('a@b.example');
+  });
+
+  it('describes a thrown value that is not an Error without printing it', () => {
+    expect(errorLogText({ phone: '5055550123' })).toBe('Unexpected error of type object');
   });
 });

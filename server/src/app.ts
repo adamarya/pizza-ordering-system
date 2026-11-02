@@ -9,6 +9,18 @@ import { handleWebhook, webhookRawBody } from './modules/payments/payments.route
 
 const version = process.env.npm_package_version ?? '0.1.0';
 
+// What an unexpected error writes to the server log (S2-37, PB-13): its type, its code, the first
+// line of its message, and the stack frames. The rest of the message is left out because a Prisma
+// error repeats the arguments of the failed call there, which can include a customer's name, phone,
+// or delivery address, and contact details must never reach the logs.
+export function errorLogText(err: unknown): string {
+  if (!(err instanceof Error)) return `Unexpected error of type ${typeof err}`;
+  const code = (err as { code?: unknown }).code;
+  const firstLine = err.message.split('\n').find((line) => line.trim() !== '')?.trim() ?? '';
+  const frames = (err.stack ?? '').split('\n').filter((line) => /^\s+at /.test(line));
+  return [`${err.name}${typeof code === 'string' ? ` ${code}` : ''}: ${firstLine}`, ...frames].join('\n');
+}
+
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
@@ -69,7 +81,7 @@ export function createApp() {
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
     const known = typeof err?.type === 'string' ? clientErrors[err.type] : undefined;
     if (known) return res.status(known[0]).json({ error: known[1] });
-    console.error(err);
+    console.error(errorLogText(err));
     res.status(500).json({ error: 'Something went wrong. Please try again.' });
   };
   app.use(onError);
